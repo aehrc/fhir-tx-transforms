@@ -34,6 +34,13 @@
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<hapi.version>4.1.0</hapi.version>
 	</properties>
+	
+	<scm>
+        <connection>scm:git:https://github.com/aehrc/fhir-tx-transforms.git</connection>
+		<developerConnection>scm:git:https://github.com/aehrc/fhir-tx-transforms.git</developerConnection>
+        <url>https://github.com/aehrc/fhir-tx-transforms.git</url>
+		<tag>HEAD</tag>
+	</scm>
 
 	<dependencies>
 		<dependency>
