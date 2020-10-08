@@ -5,6 +5,7 @@
 
 package au.csiro.fhir.transforms.parsers;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -29,7 +30,7 @@ import ca.uhn.fhir.context.FhirContext;
 public class CTV2Parser {
 
 	private CodeSystem processCodeSystem(String conFile, String version, String outFolder) throws IOException {
-		String outFile = outFolder == null ? null : outFolder + "\\CodeSystem - READ V2 " + version + ".json";
+		File outFile = outFolder == null ? null : new File(outFolder , "CodeSystem - READ V2 " + version + ".json");
 		Map<String, String> codes = new HashMap<String, String>();
 		for (String line : Utility.readTxtFile(conFile, false)) {
 			String[] parts = line.split(",");
@@ -64,7 +65,7 @@ public class CTV2Parser {
 
 	private ConceptMap processMapping(String mapFile, String version, String outFolder) throws IOException {
 
-		String outFile = outFolder == null ? null : outFolder + "\\ConceptMap - Read2 -ICD10UK " + version + ".json";
+		File outFile = outFolder == null ? null : new File(outFolder,"ConceptMap - Read2 -ICD10UK " + version + ".json");
 		ConceptMap conceptMap = new ConceptMap();
 		conceptMap.setId("READV2-ICD10UK-MAP");
 		conceptMap.setUrl("http://fhir.hl7.org.uk/R4/ConceptMap/ReadV2-ICD10UK").setVersion(version)

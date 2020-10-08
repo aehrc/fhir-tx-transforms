@@ -5,6 +5,7 @@
 
 package au.csiro.fhir.transforms.parsers;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -70,7 +71,7 @@ public class ICDParser {
 
 	private CodeSystem processCodeSystem(String codeFile, String version, String outFolder) throws IOException {
 
-		final String outFile = outFolder == null ? null : outFolder + "\\CodeSystem - ICD UK " + version + ".json";
+		File outFile = outFolder == null ? null : new File(outFolder , "\\CodeSystem - ICD UK " + version + ".json");
 
 		System.out.println("Process ICD 10 UK version - " + version);
 

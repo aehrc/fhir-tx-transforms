@@ -82,7 +82,7 @@ public class Parser {
 		for (String s : getPropertiesWithStartString("icd10uk.version")) {
 			String version = s.split("\\.")[2];
 			String codeFile = props.getProperty(s);
-			parser.processCodeSystemWithUpdate(codeFile, version, outFolder, txServer);
+			parser.processCodeSystemWithUpdate(codeFile, version, outFolder,  updateServer ? txServer : null);
 		}
 
 	}

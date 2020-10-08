@@ -5,6 +5,7 @@
 
 package au.csiro.fhir.transforms.parsers;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -79,13 +80,13 @@ public class CTV3Parser {
 
 	public CodeSystem processCodeSystem(String versioned_folder, String version, String outFolder) throws IOException {
 
-		final String outFile = outFolder + "\\Code System - CTV3 - " + version + ".json";
+		File outFile = new File(outFolder , "\\Code System - CTV3 - " + version + ".json");
 
 		System.out.println("Process CTV 3 version - " + version);
-		String conFile = versioned_folder + "\\Concept.v3";
-		String descFile = versioned_folder + "\\Terms.v3";
-		String descripFile = versioned_folder + "\\descrip.v3";
-		String relFile = versioned_folder + "\\V3hier.v3";
+		File conFile =new File ( versioned_folder , "Concept.v3");
+		File descFile = new File (versioned_folder , "Terms.v3");
+		File descripFile = new File (versioned_folder , "descrip.v3");
+		File relFile = new File (versioned_folder , "V3hier.v3");
 
 		Map<String, CTVCode> allCodes = new HashMap<String, CTV3Parser.CTVCode>();
 		Map<String, String> domains = new HashMap<String, String>();

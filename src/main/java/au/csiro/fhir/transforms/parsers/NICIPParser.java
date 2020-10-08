@@ -5,6 +5,7 @@
 
 package au.csiro.fhir.transforms.parsers;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -38,17 +39,17 @@ public class NICIPParser {
 	public void processResourceWithUpdate(String packageFolder, String version, String outFolder, String txServerUrl)
 			throws IOException {
 
-		String codeListFile = packageFolder + "\\NICIP_Code_Set_withSCT_" + version + ".txt";
-		String opcsMapFile = packageFolder + "\\NICIP-OPCS-4_MappingTable_" + version + ".txt";
-		String codeSystemFile = outFolder + "\\CodeSystem - NICIP " + version + ".json";
-		String conceptMap_sct_File = outFolder + "\\ConceptMap - NICIP - SNOMED CT " + version + ".json";
-		String conceptMap_opcs_File = outFolder + "\\ConceptMap - NICIP - OPCS " + version + ".json";
+		File codeListFile = new File( packageFolder , "\\NICIP_Code_Set_withSCT_" + version + ".txt");
+		File opcsMapFile = new File( packageFolder , "\\NICIP-OPCS-4_MappingTable_" + version + ".txt");
+		File codeSystemFile =new File(  outFolder , "\\CodeSystem - NICIP " + version + ".json");
+		File conceptMap_sct_File = new File( outFolder, "\\ConceptMap - NICIP - SNOMED CT " + version + ".json");
+		File conceptMap_opcs_File = new File( outFolder , "\\ConceptMap - NICIP - OPCS " + version + ".json");
 
 		/**
 		 * Fix for naming error
 		 */
 		if (version.equals("20190601") || version.equals("20200401")) {
-			opcsMapFile = packageFolder + "\\NICIP-OPCS_MappingTable_" + version + ".txt";
+			opcsMapFile =new File( packageFolder , "\\NICIP-OPCS_MappingTable_" + version + ".txt");
 		}
 
 		CodeSystem codeSystem = initCodeSystem(version);

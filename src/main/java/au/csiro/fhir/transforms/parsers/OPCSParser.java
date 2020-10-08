@@ -5,6 +5,7 @@
 
 package au.csiro.fhir.transforms.parsers;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -33,7 +34,7 @@ public class OPCSParser {
 			throws IOException {
 
 		System.out.println("Process OPCS version " + version);
-		final String outFile = outFolder == null ? null : outFolder + "\\Code System - OPCS-4 - " + version + ".json";
+		File outFile = outFolder == null ? null :new File( outFolder , "\\Code System - OPCS-4 - " + version + ".json");
 
 		Map<String, String> allCodes = new HashMap<String, String>();
 		Set<String> validCode = new HashSet<String>();

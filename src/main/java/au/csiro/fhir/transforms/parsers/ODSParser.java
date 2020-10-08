@@ -5,6 +5,7 @@
 
 package au.csiro.fhir.transforms.parsers;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
@@ -39,10 +40,10 @@ public class ODSParser {
 			throws IOException, ParserConfigurationException, SAXException {
 
 		System.out.println("Process ODS version - " + version);
-		final String outFile_PrimaryRole = outFolder == null ? null
-				: outFolder + "\\Code System - ODS - Primary Role " + version + ".json";
-		final String outFile_OrganisationRole = outFolder == null ? null
-				: outFolder + "\\Code System - ODS - Organisation Role " + version + ".json";
+		File outFile_PrimaryRole = outFolder == null ? null
+				: new File( outFolder , "\\Code System - ODS - Primary Role " + version + ".json");
+		File outFile_OrganisationRole = outFolder == null ? null
+				: new File( outFolder + "\\Code System - ODS - Organisation Role " + version + ".json");
 
 		// Data
 

@@ -16,6 +16,10 @@ public class Utility {
 
 	public static List<String> readTxtFile(String fileName, boolean heading) throws IOException {
 		File file = new File(fileName);
+		return readTxtFile(file,heading);
+	}
+	
+	public static List<String> readTxtFile(File file, boolean heading) throws IOException {
 		List<String> con = FileUtils.readLines(file, Charset.defaultCharset());
 		if (heading) {
 			con.remove(0);
@@ -99,6 +103,23 @@ public class Utility {
 				e.printStackTrace();
 			}
 			System.out.println("\nOutput to release file : " + fileName);
+		}
+
+	}
+	public static void toTextFile(String con, File file) {
+
+		if (file != null) {
+			FileUtils.deleteQuietly(file);
+
+			try {
+				FileWriter fileWriter = new FileWriter(file);
+				fileWriter.write(con);
+				fileWriter.close();
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+			System.out.println("\nOutput to release file : " + file.getAbsolutePath());
 		}
 
 	}
