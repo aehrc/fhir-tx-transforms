@@ -7,6 +7,7 @@ package au.csiro.fhir.transforms;
 
 import java.io.IOException;
 import java.io.StringReader;
+import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.HashSet;
@@ -20,6 +21,7 @@ import org.xml.sax.SAXException;
 
 import au.csiro.fhir.transforms.helper.Utility;
 import au.csiro.fhir.transforms.parsers.CTV2Parser;
+import au.csiro.fhir.transforms.parsers.CTV2WithTermParser;
 import au.csiro.fhir.transforms.parsers.CTV3Parser;
 import au.csiro.fhir.transforms.parsers.ICDParser;
 import au.csiro.fhir.transforms.parsers.NICIPParser;
@@ -59,6 +61,15 @@ public class Parser {
 		CTV2Parser parser = new CTV2Parser();
 		parser.processCodeSystemWithUpdate(codeFile, "20160401", outFolder, updateServer ? txServer : null);
 		parser.processConceptMapWithUpdate(mapFile, "20160401", outFolder, updateServer ? txServer : null);
+	}
+	
+	private void parseCTV2Term() throws IOException, ParseException {
+		String codeFile = props.getProperty("ctv2.term.coreFile");
+		String termFile = props.getProperty("ctv2.term.termFile");
+		
+		CTV2WithTermParser parser = new CTV2WithTermParser();
+		parser.processCodeSystemWithUpdate(codeFile, termFile, "20160401", outFolder, updateServer ? txServer : null);
+		//parser.processConceptMapWithUpdate(mapFile, "20160401", outFolder, updateServer ? txServer : null);
 	}
 
 	private void parseCTV3() throws IOException {
@@ -138,7 +149,7 @@ public class Parser {
 		}
 	}
 
-	public void parseAll(String configFileName) throws IOException, ParserConfigurationException, SAXException {
+	public void parseAll(String configFileName) throws IOException, ParserConfigurationException, SAXException, ParseException {
 		loadPropoerties(configFileName);
 		if (Boolean.valueOf(props.getProperty("process.nicip"))) {
 			parseNICIP();
@@ -154,6 +165,9 @@ public class Parser {
 		}
 		if (Boolean.valueOf(props.getProperty("process.ctv2"))) {
 			parseCTV2();
+		}
+		if (Boolean.valueOf(props.getProperty("process.ctv2term"))) {
+			parseCTV2Term();
 		}
 		if (Boolean.valueOf(props.getProperty("process.ods"))) {
 			parseODS();
@@ -175,6 +189,8 @@ public class Parser {
 		} catch (ParserConfigurationException e) {
 			e.printStackTrace();
 		} catch (SAXException e) {
+			e.printStackTrace();
+		} catch (ParseException e) {
 			e.printStackTrace();
 		}
 	}

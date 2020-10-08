@@ -23,6 +23,8 @@ public class Utility {
 		return con;
 
 	}
+	
+	
 
 	public static String readInputToString(InputStream is) {
 		try {
@@ -35,10 +37,9 @@ public class Utility {
 			}
 			return sb.toString();
 		} catch (FileNotFoundException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+						e.printStackTrace();
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
+		
 			e.printStackTrace();
 		}
 
@@ -79,7 +80,7 @@ public class Utility {
 
 			fileWriter.close();
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
+
 			e.printStackTrace();
 		}
 		System.out.println("\nOutput to release file : " + fileName);
@@ -95,7 +96,7 @@ public class Utility {
 				fileWriter.write(con);
 				fileWriter.close();
 			} catch (IOException e) {
-				// TODO Auto-generated catch block
+
 				e.printStackTrace();
 			}
 			System.out.println("\nOutput to release file : " + fileName);
