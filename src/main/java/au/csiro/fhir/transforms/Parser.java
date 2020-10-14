@@ -7,6 +7,7 @@ package au.csiro.fhir.transforms;
 
 import java.io.IOException;
 import java.io.StringReader;
+import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.HashSet;
@@ -53,14 +54,15 @@ public class Parser {
 		System.out.printf("FHIR terminology server update is %s \n", updateServer);
 	}
 
-	private void parseCTV2() throws IOException {
-		String codeFile = props.getProperty("ctv2.coreFile");
-		String mapFile = props.getProperty("ctv2.mapFile");
+	private void parseCTV2() throws IOException, ParseException {
+		
+		String termFile = props.getProperty("ctv2.termFile");
+		
 		CTV2Parser parser = new CTV2Parser();
-		parser.processCodeSystemWithUpdate(codeFile, "20160401", outFolder, updateServer ? txServer : null);
-		parser.processConceptMapWithUpdate(mapFile, "20160401", outFolder, updateServer ? txServer : null);
+		parser.processCodeSystemWithUpdate( termFile, "20160401", outFolder, updateServer ? txServer : null);
 	}
 
+	
 	private void parseCTV3() throws IOException {
 		CTV3Parser parser = new CTV3Parser();
 		for (String s : getPropertiesWithStartString("ctv3.version")) {
@@ -138,7 +140,7 @@ public class Parser {
 		}
 	}
 
-	public void parseAll(String configFileName) throws IOException, ParserConfigurationException, SAXException {
+	public void parseAll(String configFileName) throws IOException, ParserConfigurationException, SAXException, ParseException {
 		loadPropoerties(configFileName);
 		if (Boolean.valueOf(props.getProperty("process.nicip"))) {
 			parseNICIP();
@@ -153,6 +155,9 @@ public class Parser {
 			parseCTV3();
 		}
 		if (Boolean.valueOf(props.getProperty("process.ctv2"))) {
+			parseCTV2();
+		}
+		if (Boolean.valueOf(props.getProperty("process.ctv2term"))) {
 			parseCTV2();
 		}
 		if (Boolean.valueOf(props.getProperty("process.ods"))) {
@@ -175,6 +180,8 @@ public class Parser {
 		} catch (ParserConfigurationException e) {
 			e.printStackTrace();
 		} catch (SAXException e) {
+			e.printStackTrace();
+		} catch (ParseException e) {
 			e.printStackTrace();
 		}
 	}
