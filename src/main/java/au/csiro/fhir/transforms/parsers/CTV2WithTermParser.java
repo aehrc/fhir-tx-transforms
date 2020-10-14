@@ -16,7 +16,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.List;
 
-import org.hl7.fhir.r4.model.BooleanType;
 import org.hl7.fhir.r4.model.CodeSystem;
 import org.hl7.fhir.r4.model.CodeType;
 import org.hl7.fhir.r4.model.Coding;
@@ -176,9 +175,9 @@ class Read2Concept {
 
 }
 
-public class CTV2Parser {
+public class CTV2WithTermParser {
 
-	private CodeSystem processCodeSystem( String termFile, String version, String outFolder)
+	private CodeSystem processCodeSystem(String conFile, String termFile, String version, String outFolder)
 			throws IOException, ParseException {
 		Map<String, Read2Concept> concepts = new HashMap<String, Read2Concept>();
 		String outFile = outFolder == null ? null : outFolder + "\\CodeSystem - READ V2 With Term " + version + ".json";
@@ -265,7 +264,7 @@ public class CTV2Parser {
 		propertyComponent_status.setCode("status").setDescription("Concept Status").setType(PropertyType.STRING);
 		
 
-	//	codeSystem.addProperty(new PropertyComponent().setType(PropertyType.CODE).setCode("inactive")
+	//	codeSystem.addProperty(new PropertyComponent().setType(PropertyType.CODE).setCode("parent")
 				//.setDescription("The Read V2 concept id that is a direct parent of the concept"));
 		codeSystem.addProperty(new PropertyComponent().setType(PropertyType.STRING).setCode("termCode")
 				.setDescription("The Read V2 term code"));
@@ -299,7 +298,7 @@ public class CTV2Parser {
 				for(Read2Term term : con.getTerms()) {
 					if(term.getId().equals("00") ) {
 						concept.setDisplay(term.getLongest());
-						concept.addProperty(new ConceptPropertyComponent(new CodeType("inactive"),new BooleanType("true")));
+						concept.addProperty(new ConceptPropertyComponent(new CodeType("lastDate"),new DateTimeType(formatDateTime(term.getLastDate()))));
 						for(String s : term.getotherText()) {
 							ConceptDefinitionDesignationComponent def = new ConceptDefinitionDesignationComponent();
 							def.setLanguageElement(new CodeType("en"));
@@ -359,9 +358,9 @@ public class CTV2Parser {
 		return codeSystem;
 	}
 
-	public void processCodeSystemWithUpdate(String termFile, String version, String outFolder,
+	public void processCodeSystemWithUpdate(String conFile, String termFile, String version, String outFolder,
 			String txServerUrl) throws IOException, ParseException {
-		CodeSystem cs = processCodeSystem(termFile, version, outFolder);
+		CodeSystem cs = processCodeSystem(conFile, termFile, version, outFolder);
 		if (txServerUrl != null) {
 			FHIRClientR4 fhirClientR4 = new FHIRClientR4(txServerUrl);
 			fhirClientR4.createUpdateCodeSystem(cs);

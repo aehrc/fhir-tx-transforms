@@ -55,14 +55,14 @@ public class Parser {
 	}
 
 	private void parseCTV2() throws IOException, ParseException {
-		String codeFile = props.getProperty("ctv2.term.coreFile");
-		String termFile = props.getProperty("ctv2.term.termFile");
+		
+		String termFile = props.getProperty("ctv2.termFile");
 		
 		CTV2Parser parser = new CTV2Parser();
-		parser.processCodeSystemWithUpdate(codeFile, termFile, "20160401", outFolder, updateServer ? txServer : null);
+		parser.processCodeSystemWithUpdate( termFile, "20160401", outFolder, updateServer ? txServer : null);
 	}
-	
 
+	
 	private void parseCTV3() throws IOException {
 		CTV3Parser parser = new CTV3Parser();
 		for (String s : getPropertiesWithStartString("ctv3.version")) {
@@ -155,6 +155,9 @@ public class Parser {
 			parseCTV3();
 		}
 		if (Boolean.valueOf(props.getProperty("process.ctv2"))) {
+			parseCTV2();
+		}
+		if (Boolean.valueOf(props.getProperty("process.ctv2term"))) {
 			parseCTV2();
 		}
 		if (Boolean.valueOf(props.getProperty("process.ods"))) {
