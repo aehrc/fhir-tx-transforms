@@ -69,7 +69,7 @@ For example. to add 2 versions for CTV 3, the version number is 20160401 and 201
 
 ## Supported Resources
 
-The FHIR Terminology Transforms project supports the following NHS product to be transformed to FHIR code systems.
+The FHIR Terminology Transforms project supports transforming the following terminologies into FHIR code systems.
 - Read Code V2
 - Read Code (CTV) V3
 - NICIP
@@ -78,7 +78,7 @@ The FHIR Terminology Transforms project supports the following NHS product to be
 - ICD-10-UK
 
 ## Required resources for processing 
-The NHS resources are hosted in Technology Reference data Update Distribution(NHS TRUD) web site. The resources files are needed to be prepared before used by NHS Parser. 
+The resources are hosted on the Technology Reference data Update Distribution (NHS TRUD) web site. The resource files need to be prepared before transformation. 
 
 ### Read code (CTV) V3
  - Resources URL :[https://isd.digital.nhs.uk/trud3/user/authenticated/group/0/pack/9/subpack/19/releases](https://isd.digital.nhs.uk/trud3/user/authenticated/group/0/pack/9/subpack/19/releases)
