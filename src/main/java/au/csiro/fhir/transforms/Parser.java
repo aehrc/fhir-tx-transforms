@@ -21,7 +21,6 @@ import org.xml.sax.SAXException;
 
 import au.csiro.fhir.transforms.helper.Utility;
 import au.csiro.fhir.transforms.parsers.CTV2Parser;
-import au.csiro.fhir.transforms.parsers.CTV2WithTermParser;
 import au.csiro.fhir.transforms.parsers.CTV3Parser;
 import au.csiro.fhir.transforms.parsers.ICDParser;
 import au.csiro.fhir.transforms.parsers.NICIPParser;
@@ -55,22 +54,14 @@ public class Parser {
 		System.out.printf("FHIR terminology server update is %s \n", updateServer);
 	}
 
-	private void parseCTV2() throws IOException {
-		String codeFile = props.getProperty("ctv2.coreFile");
-		String mapFile = props.getProperty("ctv2.mapFile");
-		CTV2Parser parser = new CTV2Parser();
-		parser.processCodeSystemWithUpdate(codeFile, "20160401", outFolder, updateServer ? txServer : null);
-		parser.processConceptMapWithUpdate(mapFile, "20160401", outFolder, updateServer ? txServer : null);
-	}
-	
-	private void parseCTV2Term() throws IOException, ParseException {
+	private void parseCTV2() throws IOException, ParseException {
 		String codeFile = props.getProperty("ctv2.term.coreFile");
 		String termFile = props.getProperty("ctv2.term.termFile");
 		
-		CTV2WithTermParser parser = new CTV2WithTermParser();
+		CTV2Parser parser = new CTV2Parser();
 		parser.processCodeSystemWithUpdate(codeFile, termFile, "20160401", outFolder, updateServer ? txServer : null);
-		//parser.processConceptMapWithUpdate(mapFile, "20160401", outFolder, updateServer ? txServer : null);
 	}
+	
 
 	private void parseCTV3() throws IOException {
 		CTV3Parser parser = new CTV3Parser();
@@ -165,9 +156,6 @@ public class Parser {
 		}
 		if (Boolean.valueOf(props.getProperty("process.ctv2"))) {
 			parseCTV2();
-		}
-		if (Boolean.valueOf(props.getProperty("process.ctv2term"))) {
-			parseCTV2Term();
 		}
 		if (Boolean.valueOf(props.getProperty("process.ods"))) {
 			parseODS();
