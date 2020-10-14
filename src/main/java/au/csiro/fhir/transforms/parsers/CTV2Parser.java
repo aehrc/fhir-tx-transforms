@@ -237,14 +237,6 @@ public class CTV2Parser {
 			}
 		}
 
-		for (Read2Concept c : concepts.values()) {
-			for (Read2Term t : c.getTerms()) {
-				// System.out.println(c.getCodeID() + "\t" + t.getText());
-			}
-		}
-
-		// out to Fhir r4
-
 		CodeSystem codeSystem = new CodeSystem();
 
 		SimpleDateFormat f = new SimpleDateFormat("yyyymmdd");
@@ -264,9 +256,6 @@ public class CTV2Parser {
 		PropertyComponent propertyComponent_status = new PropertyComponent();
 		propertyComponent_status.setCode("status").setDescription("Concept Status").setType(PropertyType.STRING);
 		
-
-	//	codeSystem.addProperty(new PropertyComponent().setType(PropertyType.CODE).setCode("inactive")
-				//.setDescription("The Read V2 concept id that is a direct parent of the concept"));
 		codeSystem.addProperty(new PropertyComponent().setType(PropertyType.STRING).setCode("termCode")
 				.setDescription("The Read V2 term code"));
 		codeSystem.addProperty(new PropertyComponent().setType(PropertyType.DATETIME).setCode("firstDate")
