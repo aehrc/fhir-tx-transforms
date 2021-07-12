@@ -562,8 +562,8 @@ public class DMDParser {
 				VmpType.class, vmp.getVMPS().getVMP());
 		transferComplexType(conceptRegister, propertyRigister, keyID, null, null, null, null, VpiType.class,
 				vmp.getVIRTUALPRODUCTINGREDIENT().getVPI());
-		// transferComplexTypeTemp(conceptRegister, propertyRigister, keyID, null, null,
-		// null, null, OntDrugFormType.class,vmp.getONTDRUGFORM().getONT());
+		transferComplexTypeForONTFORMROUTE(conceptRegister, propertyRigister, keyID, null, null,
+				null, null, OntDrugFormType.class,vmp.getONTDRUGFORM().getONT());
 		transferComplexType(conceptRegister, propertyRigister, keyID, null, null, null, null, DrugFormType.class,
 				vmp.getDRUGFORM().getDFORM());
 		transferComplexType(conceptRegister, propertyRigister, keyID, null, null, null, null, DrugRouteType.class,
@@ -731,6 +731,56 @@ public class DMDParser {
 
 					else {
 						conceptPropertyComponent.setValue(new StringType(v.toString()));
+					}
+					conceptRegister.get(id).addProperty(conceptPropertyComponent);
+
+				}
+			}
+		}
+
+	}
+	
+	private void transferComplexTypeForONTFORMROUTE(Map<String, ConceptDefinitionComponent> conceptRegister,
+			Map<String, PropertyComponent> propertyRigister, String idField, String displayField, String synobymField,
+			ConceptType nativeParent, Set<String> parentField, Class<?> clazz, List<?> oList)
+			throws NoSuchMethodException, SecurityException, IllegalAccessException, IllegalArgumentException,
+			InvocationTargetException {
+
+		Map<String, Class<?>> fields = new HashMap<String, Class<?>>();
+		Map<String, String> fieldNameMap = new HashMap<String, String>();
+		// Property Register
+		for (Field field : clazz.getDeclaredFields()) {
+			XmlElement element = (XmlElement) field.getAnnotations()[0];
+			String elementName = element.name();
+			System.out
+					.println(clazz.getName() + "\t" + field.getName() + "\t" + element.name() + "\t" + field.getType());
+				fields.put(field.getName().toUpperCase(), field.getType());
+				fieldNameMap.put(field.getName().toUpperCase(), elementName);
+		}
+		// Concept Add
+		for (Object o : oList) {
+			Method m = o.getClass().getMethod("get" + idField);
+			Object v = m.invoke(o);
+			String id = v.toString();
+			for (Map.Entry<String, Class<?>> entry : fields.entrySet()) {
+				String fieldName = entry.getKey();
+				if (!fieldName.equalsIgnoreCase(idField) && v != null) {
+					// can only be form cd in this case
+					String propertyName = "ONTFORMCD";
+					m = o.getClass().getMethod("get" + fieldName);
+					v = m.invoke(o);
+					ConceptPropertyComponent conceptPropertyComponent = new ConceptPropertyComponent();
+					conceptPropertyComponent.setCode(propertyName);
+					if (lookUpNameMap.containsKey(propertyName)) {
+						Map<String, String> valueMap = lookupTables.get(lookUpNameMap.get(propertyName));
+						if (v.toString().length() > 0 && valueMap != null && valueMap.get(v.toString()) != null) {
+							Coding coding = new Coding();
+							coding.setSystem("http://digital.nhs.uk/fhir/CodeSystem/dmd/ONTFORMROUTE");
+							coding.setCode(v.toString());
+							coding.setDisplay(valueMap.get(v.toString()));
+							conceptPropertyComponent.setValue(coding);
+							System.out.println("TEMP Solution - " + fieldName + "\t" + propertyName + "\t" + conceptPropertyComponent.getValue().toString() );
+						}
 					}
 					conceptRegister.get(id).addProperty(conceptPropertyComponent);
 
