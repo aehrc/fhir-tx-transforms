@@ -15,6 +15,7 @@ import java.util.List;
 import java.util.Properties;
 import java.util.Set;
 
+import javax.xml.bind.JAXBException;
 import javax.xml.parsers.ParserConfigurationException;
 
 import org.xml.sax.SAXException;
@@ -53,10 +54,10 @@ public class Parser {
 		if (txServer != null) {
 			System.out.printf("FHIR terminology server URL is %s \n", txServer);
 		}	
-		feedServer = props.getProperty("feed.server.url");
+		feedServer = props.getProperty("feed.server.name");
 		if (feedServer != null) {
-			feedClient = new FeedClient();
-			System.out.printf("Atomio feed server URL is %s \n", feedServer);
+			feedClient = new FeedClient(feedServer);
+			System.out.printf("Atomio feed is %s \n", feedServer);
 		}
 	}
 
@@ -157,16 +158,16 @@ public class Parser {
 		}
 	}
 	
-	private void parseDMD() throws IOException, ParseException {
+	private void parseDMD() throws IOException, ParseException, JAXBException {
 		String dmdFolder = props.getProperty("dmd.releaseFolder");	
 		String dmdSerial = props.getProperty("dmd.releaseSerial");	
 		String supportFile =  props.getProperty("dmd.supportFile");	
 		DMDParser parser = new DMDParser();
 		//parser.processCodeSystemWithUpdate( dmdFolder,dmdSerial ,outFolder, txServer, feedClient);
-		parser.processSupportCodeSystemWithUpdate(dmdFolder, dmdSerial, dmdFolder, txServer, feedClient);
+		parser.processSupportCodeSystemWithUpdate(dmdFolder, dmdSerial, outFolder, txServer, feedClient);
 	}
 
-	public void parseAll(String configFileName) throws IOException, ParserConfigurationException, SAXException, ParseException {
+	public void parseAll(String configFileName) throws IOException, ParserConfigurationException, SAXException, ParseException, JAXBException {
 		loadPropoerties(configFileName);
 		if (Boolean.valueOf(props.getProperty("process.nicip"))) {
 			parseNICIP();
@@ -208,6 +209,8 @@ public class Parser {
 		} catch (SAXException e) {
 			e.printStackTrace();
 		} catch (ParseException e) {
+			e.printStackTrace();
+		} catch (JAXBException e) {
 			e.printStackTrace();
 		}
 	}

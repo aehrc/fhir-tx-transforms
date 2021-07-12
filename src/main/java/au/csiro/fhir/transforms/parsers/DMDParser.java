@@ -22,6 +22,9 @@ import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBException;
 
 import org.hl7.fhir.r4.model.BooleanType;
+import org.hl7.fhir.r4.model.Bundle;
+import org.hl7.fhir.r4.model.Bundle.BundleEntryComponent;
+import org.hl7.fhir.r4.model.Bundle.BundleType;
 import org.hl7.fhir.r4.model.CodeSystem;
 import org.hl7.fhir.r4.model.CodeSystem.CodeSystemContentMode;
 import org.hl7.fhir.r4.model.CodeSystem.ConceptDefinitionComponent;
@@ -182,28 +185,64 @@ public class DMDParser {
 	
 	}
 	
-	public void processSupportCodeSystemWithUpdate(String dmdFolder, String dmdSerial, String outFolder,String txServerUrl, FeedClient feedClient) throws IOException {
+	public void processSupportCodeSystemWithUpdate(String dmdFolder, String dmdSerial, String outFolder,String txServerUrl, FeedClient feedClient) throws IOException, JAXBException {
 		
 		String version = getVersionNumber(dmdFolder);
-		CodeSystem cs = processCodeSystem(dmdFolder,dmdSerial, version, outFolder);
-		String outFileName = "CodeSystem-DMD-" + version + ".json";
-		File outFile = new File( outFolder , outFileName );
+		File lookupFile = new File(dmdFolder, "f_lookup2_" + dmdSerial + ".xml");
+		Map<LookUpTag, Map<String, String>> lookupTables = loadLookupTables(lookupFile);
 		
+		Bundle bundle = new Bundle();
+		bundle.setType(BundleType.COLLECTION);
+		bundle.setId("DMD-CodeSystems-Bundle");
 		FhirContext ctx = FhirContext.forR4();
-		Utility.toTextFile(ctx.newJsonParser().encodeResourceToString(cs), outFile);
+		for (Map.Entry<LookUpTag, Map<String, String>> e : lookupTables.entrySet()) {
+			CodeSystem codeSystem = new CodeSystem();
+			String tag  = e.getKey().toString();
+			String title = title_lookup + tag;
+			codeSystem.setId(csID+"-"+ tag.replaceAll("_", "-"));
+			String url = baseURL_CodeSystem_Lookup + "/" + tag;
+			codeSystem.setUrl(url).setValueSet(baseURL_ValueSet_Lookup + "/" + tag).setDescription(
+					"A FHIR CodeSystem rendering of the lookup table in Dictionary of medicines and devices (dm+d)")
+					.setVersion(version).setTitle(tag).setName(title).setStatus(PublicationStatus.DRAFT)
+					.setExperimental(true).setContent(CodeSystemContentMode.COMPLETE).setPublisher("NHS UK")
+					.setContent(CodeSystemContentMode.COMPLETE);
+			codeSystem.setConcept(new ArrayList<CodeSystem.ConceptDefinitionComponent>());
+			for(Map.Entry<String,String> en : e.getValue().entrySet()) {
+				ConceptDefinitionComponent concept = new ConceptDefinitionComponent();
+				concept.setCode(en.getKey());
+				concept.setDisplay(en.getValue());
+				codeSystem.addConcept(concept);
+			}
+			
+			BundleEntryComponent bundleEntry = new BundleEntryComponent();
+			bundleEntry.setFullUrl(url);
+			bundleEntry.setResource(codeSystem);
+			bundle.addEntry(bundleEntry);
+			
+			
+			String con = ctx.newJsonParser().setPrettyPrint(true).encodeResourceToString(codeSystem);
+			String fileName = "DMD-" + tag.toLowerCase() + ".json";
+			Utility.toTextFile(con, outFolder + File.separator + fileName);
+			
+			if (txServerUrl != null) {
+				FHIRClientR4 fhirClientR4 = new FHIRClientR4(txServerUrl);
+				fhirClientR4.createUpdateCodeSystem(codeSystem);
+			}
+			
+			
+		}
 		
-		if (txServerUrl != null) {
-			FHIRClientR4 fhirClientR4 = new FHIRClientR4(txServerUrl);
-			fhirClientR4.createUpdateCodeSystem(cs);
-
-		}
+		String con = ctx.newJsonParser().setPrettyPrint(true).encodeResourceToString(bundle);
+		String fileName = "DMD_CodeSystems_Bundle.json";
+		Utility.toTextFile(con, outFolder + File.separator + fileName);	
+		
 		if (feedClient != null) {
-			Entry entry = FeedUtility.createFeedEntry_CodeSystem(cs, outFileName);
-			String entryFileName = Utility.jsonFileNameToEntry(outFileName);
-			Utility.toTextFile(FeedUtility.entryToJson(entry), new File(outFolder,  entryFileName));
-			feedClient.updateEntryToNHSFeed(entry, new File(outFolder,entryFileName), new File(outFolder,outFileName));
+			Entry entry = FeedUtility.createFeedEntry_Bundle(bundle, fileName,version);
+			String entryFileName = Utility.jsonFileNameToEntry(fileName);
+			Utility.toTextFile(FeedUtility.entryToJson(entry), new File(outFolder, entryFileName));
+			feedClient.updateEntryToNHSFeed(entry, new File(outFolder, entryFileName),
+					new File(outFolder, fileName));
 		}
-	
 	}
 	
 	private String getVersionNumber(String dmdFolderName) {

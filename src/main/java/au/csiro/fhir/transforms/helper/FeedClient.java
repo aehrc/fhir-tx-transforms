@@ -31,14 +31,19 @@ public class FeedClient {
 	
 	final Logger logger = Logger.getLogger(FeedClient.class.getName());
 
-	String syndServer = "https://synd.ontoserver.csiro.au/feed/nhs-digital";
-	String syndCientID = "syndication-upload";
-	String syndSecret = "67c4466b-1186-4e36-a879-746a585465f0";
-	String realm = "aehrc";
-	String authServer = "https://auth.ontoserver.csiro.au";
+	final String syndServer = "https://synd.ontoserver.csiro.au/feed/";
+	
+	final String syndCientID = "syndication-upload";
+	final String syndSecret = "67c4466b-1186-4e36-a879-746a585465f0";
+	final String realm = "aehrc";
+	final String authServer = "https://auth.ontoserver.csiro.au";
+	
+	
+	String feed;
 	Client client = null;
 
-	public FeedClient() {
+	public FeedClient(String feedName) {
+		feed = syndServer + feedName;
 		Feature feature = new LoggingFeature(logger, Level.INFO, null, null);
 		client = ClientBuilder.newBuilder().register(feature).build();
 		
@@ -48,7 +53,7 @@ public class FeedClient {
 		
 		System.out.println("delete "  + id);
 		
-		WebTarget webTarget = client.target(syndServer);
+		WebTarget webTarget = client.target(feed);
 
 		WebTarget deleteEntryTarget = webTarget.path("entry/" + id);
 
@@ -61,7 +66,7 @@ public class FeedClient {
 	
 	public String searchEntryByIdentifierAndVersion( String contentItemIdentifier, String contentItemVersion) {
 		
-		WebTarget webTarget = client.target(syndServer);
+		WebTarget webTarget = client.target(feed);
 
 		WebTarget findEntryTarget = webTarget.path("");
 
@@ -89,7 +94,7 @@ public class FeedClient {
 
 	public void createEntryToNHSFeed(File entryFile, File bodyFile) throws IOException {
 	
-		WebTarget webTarget = client.target(syndServer);
+		WebTarget webTarget = client.target(feed);
 
 		WebTarget createEntryTarget = webTarget.path("entry/");
 		
