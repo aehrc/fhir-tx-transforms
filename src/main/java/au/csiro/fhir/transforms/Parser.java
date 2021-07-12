@@ -22,6 +22,7 @@ import org.xml.sax.SAXException;
 import au.csiro.fhir.transforms.helper.Utility;
 import au.csiro.fhir.transforms.parsers.CTV2Parser;
 import au.csiro.fhir.transforms.parsers.CTV3Parser;
+import au.csiro.fhir.transforms.parsers.DMDParser;
 import au.csiro.fhir.transforms.parsers.ICDParser;
 import au.csiro.fhir.transforms.parsers.NICIPParser;
 import au.csiro.fhir.transforms.parsers.ODSParser;
@@ -88,6 +89,15 @@ public class Parser {
 		}
 
 	}
+	
+	private void parseDMD() throws IOException {
+		DMDParser parser = new DMDParser();
+		String dmdFolder = props.getProperty("dmd.releaseFolder");
+		String releaseSerial =  props.getProperty("dmd.releaseSerial");
+		parser.processCodeSystemWithUpdate( dmdFolder, releaseSerial, outFolder, updateServer ? txServer : null);
+
+
+	}
 
 	private void parseOPCS() throws IOException {
 		OPCSParser parser = new OPCSParser();
@@ -142,6 +152,7 @@ public class Parser {
 
 	public void parseAll(String configFileName) throws IOException, ParserConfigurationException, SAXException, ParseException {
 		loadPropoerties(configFileName);
+		
 		if (Boolean.valueOf(props.getProperty("process.nicip"))) {
 			parseNICIP();
 		}
@@ -162,6 +173,9 @@ public class Parser {
 		}
 		if (Boolean.valueOf(props.getProperty("process.ods"))) {
 			parseODS();
+		}
+		if (Boolean.valueOf(props.getProperty("process.dmd"))) {
+			parseDMD();
 		}
 	}
 
