@@ -6,7 +6,7 @@
 //
 
 
-package au.csiro.fhir.transform.xml.dmd.v2_3.amp;
+package au.csiro.fhir.transforms.xml.dmd.v2_3.amp;
 
 import java.util.ArrayList;
 import java.util.List;

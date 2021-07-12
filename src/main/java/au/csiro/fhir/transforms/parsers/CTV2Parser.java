@@ -5,6 +5,7 @@
 
 package au.csiro.fhir.transforms.parsers;
 
+import java.io.File;
 import java.io.IOException;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -33,7 +34,10 @@ import org.hl7.fhir.r4.model.Identifier;
 import org.hl7.fhir.r4.model.StringType;
 
 import au.csiro.fhir.transforms.helper.FHIRClientR4;
+import au.csiro.fhir.transforms.helper.FeedClient;
+import au.csiro.fhir.transforms.helper.FeedUtility;
 import au.csiro.fhir.transforms.helper.Utility;
+import au.csiro.fhir.transforms.helper.atomio.Entry;
 import ca.uhn.fhir.context.FhirContext;
 
 class Read2Term {
@@ -178,14 +182,11 @@ class Read2Concept {
 
 public class CTV2Parser {
 
-	private CodeSystem processCodeSystem( String termFile, String version, String outFolder)
+	private CodeSystem processCodeSystem( String termFile, String version, String outFolder,String domain)
 			throws IOException, ParseException {
-		Map<String, Read2Concept> concepts = new HashMap<String, Read2Concept>();
-		String outFile = outFolder == null ? null : outFolder + "\\CodeSystem - READ V2 With Term " + version + ".json";
-
+		Map<String, Read2Concept> concepts = new HashMap<String, Read2Concept>();				
 		for (String line : Utility.readTxtFile(termFile, true)) {
 			String[] parts = line.split("\t");
-			
 				String id = parts[0];
 				String termCode = parts[1].trim();
 				String text = parts[2].trim();
@@ -193,7 +194,6 @@ public class CTV2Parser {
 				String text198 = parts[4].trim();
 				String firstDate = parts[5].trim();
 				String lastDate = parts[6].trim();
-
 				Read2Term term = new Read2Term(termCode, firstDate, text);
 				
 				if (text60 != null && text60.length() > 0)
@@ -220,24 +220,34 @@ public class CTV2Parser {
 				if (codeID.endsWith("...")) {
 					String pID = codeID.subSequence(0, 1) + "....";
 					c.setParent(concepts.get(pID));
-					System.out.println(codeID + "\t" + pID);
+
 				} else if (codeID.endsWith("..")) {
 					String pID = codeID.subSequence(0, 2) + "...";
 					c.setParent(concepts.get(pID));
-					System.out.println(codeID + "\t" + pID);
+		
 				} else if (codeID.endsWith(".")) {
 					String pID = codeID.subSequence(0, 3) + "..";
 					c.setParent(concepts.get(pID));
-					System.out.println(codeID + "\t" + pID);
+				
 				} else {
 					String pID = codeID.subSequence(0, 4) + ".";
 					c.setParent(concepts.get(pID));
-					System.out.println(codeID + "\t" + pID);
+					
 				}
 			}
 		}
 
 		CodeSystem codeSystem = new CodeSystem();
+		String url = "http://read.info/readv2";
+		String title ="Read Codes Version2";
+		if(domain.equalsIgnoreCase("UNISCOT")) {
+			url+= "-scot";
+			title+=  " UNISCOT";
+		}
+		
+		if(domain.equalsIgnoreCase("UNIFIED")) {
+			title+=  " UNIFIED";
+		}
 
 		SimpleDateFormat f = new SimpleDateFormat("yyyymmdd");
 	    Date d = f.parse(version);
@@ -245,14 +255,19 @@ public class CTV2Parser {
 	    ident.setSystem("urn:ietf:rfc:3986");
 	    ident.setValue("urn:oid: 2.16.840.1.113883.6.29");
 
-		codeSystem.setId("Read-Code-Clinical-Term-Version-2");
+		codeSystem.setId(title.replaceAll("\\s", "-"));
 		codeSystem.addIdentifier(ident);
-		codeSystem.setUrl("http://read.info/readv2").setValueSet("http://read.info/readv2/ValueSet")
+		codeSystem.setUrl(url).setValueSet(url +"/vs")
 				.setDate(d)
-				.setName("NHS_Read_Code_Version_2_Code_System").setVersion(version).setTitle("NHS Read Code Version 2")
+				.setName(title.replaceAll("\\s", "_")).setVersion(version).setTitle(title)
 				.setStatus(PublicationStatus.ACTIVE).setExperimental(false).setPublisher("NHS UK")
 				.setContent(CodeSystemContentMode.COMPLETE)
-				.setHierarchyMeaning(CodeSystemHierarchyMeaning.CLASSIFIEDWITH);
+				.setHierarchyMeaning(CodeSystemHierarchyMeaning.CLASSIFIEDWITH)
+				.setCopyright(
+						"Copyright © 2020 Health and Social Care Information Centre. NHS Digital is the trading name of the Health and Social Care Information Centre.")
+				.setPublisher("NHS Digital")
+				.setDescription(title + " FHIR CodeSystem");
+		
 		PropertyComponent propertyComponent_status = new PropertyComponent();
 		propertyComponent_status.setCode("status").setDescription("Concept Status").setType(PropertyType.STRING);
 		
@@ -341,20 +356,33 @@ public class CTV2Parser {
 			
 		}
 		codeSystem.setConcept(conceptsList);
-
-		FhirContext ctx = FhirContext.forR4();
-		Utility.toTextFile(ctx.newJsonParser().setPrettyPrint(true).encodeResourceToString(codeSystem), outFile);
-
 		return codeSystem;
 	}
 
 	public void processCodeSystemWithUpdate(String termFile, String version, String outFolder,
-			String txServerUrl) throws IOException, ParseException {
-		CodeSystem cs = processCodeSystem(termFile, version, outFolder);
+			String txServerUrl , FeedClient feedClient, String domain) throws IOException, ParseException {
+		
+		CodeSystem cs = processCodeSystem(termFile, version, outFolder, domain);
+		
+		String outFileName = "CodeSystem-READV2-" + domain + "-"+ version + ".json";
+		File outFile= new File(outFolder,  outFileName);		
+		
+		// output to file
+		FhirContext ctx = FhirContext.forR4();
+		Utility.toTextFile(ctx.newJsonParser().setPrettyPrint(true).encodeResourceToString(cs), outFile);
+	
 		if (txServerUrl != null) {
 			FHIRClientR4 fhirClientR4 = new FHIRClientR4(txServerUrl);
 			fhirClientR4.createUpdateCodeSystem(cs);
 		}
+		
+		if (feedClient != null) {
+			Entry entry = FeedUtility.createFeedEntry_CodeSystem(cs, outFileName);
+			String entryFileName = Utility.jsonFileNameToEntry(outFileName);
+			Utility.toTextFile(FeedUtility.entryToJson(entry), new File(outFolder,  entryFileName));
+			feedClient.updateEntryToNHSFeed(entry,new File(outFolder,entryFileName), new File(outFolder,outFileName));
+		}
+		
 	}
 	
 	private String formatDateTime(String input) {

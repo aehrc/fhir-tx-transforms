@@ -71,6 +71,9 @@ public class Utility {
 		return null;
 
 	}
+	
+	
+
 
 	public static void toTextFile(ArrayList<String> con, String fileName) {
 
@@ -122,6 +125,12 @@ public class Utility {
 			}
 			System.out.println("\nOutput to release file : " + file.getAbsolutePath());
 		}
+
+	}
+	
+	public static String jsonFileNameToEntry(String name) {
+
+		return name.replaceAll(".json", "_Entry.json");
 
 	}
 

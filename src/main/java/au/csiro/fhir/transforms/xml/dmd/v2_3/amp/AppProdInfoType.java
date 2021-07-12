@@ -6,7 +6,7 @@
 //
 
 
-package au.csiro.fhir.transform.xml.dmd.v2_3.amp;
+package au.csiro.fhir.transforms.xml.dmd.v2_3.amp;
 
 import java.math.BigInteger;
 import javax.xml.bind.annotation.XmlAccessType;
@@ -16,19 +16,19 @@ import javax.xml.bind.annotation.XmlType;
 
 
 /**
- * <p>Java class for ApiType complex type.
+ * <p>Java class for AppProdInfoType complex type.
  * 
  * <p>The following schema fragment specifies the expected content contained within this class.
  * 
  * <pre>
- * &lt;complexType name="ApiType"&gt;
+ * &lt;complexType name="AppProdInfoType"&gt;
  *   &lt;complexContent&gt;
  *     &lt;restriction base="{http://www.w3.org/2001/XMLSchema}anyType"&gt;
  *       &lt;all&gt;
  *         &lt;element name="APID" type="{http://www.w3.org/2001/XMLSchema}integer"/&gt;
- *         &lt;element name="ISID" type="{http://www.w3.org/2001/XMLSchema}integer"/&gt;
- *         &lt;element name="STRNTH" type="{http://www.w3.org/2001/XMLSchema}float" minOccurs="0"/&gt;
- *         &lt;element name="UOMCD" type="{http://www.w3.org/2001/XMLSchema}integer" minOccurs="0"/&gt;
+ *         &lt;element name="SZ_WEIGHT" type="{http://www.w3.org/2001/XMLSchema}string" minOccurs="0"/&gt;
+ *         &lt;element name="COLOURCD" type="{http://www.w3.org/2001/XMLSchema}integer" minOccurs="0"/&gt;
+ *         &lt;element name="PROD_ORDER_NO" type="{http://www.w3.org/2001/XMLSchema}string" minOccurs="0"/&gt;
  *       &lt;/all&gt;
  *     &lt;/restriction&gt;
  *   &lt;/complexContent&gt;
@@ -38,19 +38,19 @@ import javax.xml.bind.annotation.XmlType;
  * 
  */
 @XmlAccessorType(XmlAccessType.FIELD)
-@XmlType(name = "ApiType", propOrder = {
+@XmlType(name = "AppProdInfoType", propOrder = {
 
 })
-public class ApiType {
+public class AppProdInfoType {
 
     @XmlElement(name = "APID", required = true)
     protected BigInteger apid;
-    @XmlElement(name = "ISID", required = true)
-    protected BigInteger isid;
-    @XmlElement(name = "STRNTH")
-    protected Float strnth;
-    @XmlElement(name = "UOMCD")
-    protected BigInteger uomcd;
+    @XmlElement(name = "SZ_WEIGHT")
+    protected String szweight;
+    @XmlElement(name = "COLOURCD")
+    protected BigInteger colourcd;
+    @XmlElement(name = "PROD_ORDER_NO")
+    protected String prodorderno;
 
     /**
      * Gets the value of the apid property.
@@ -77,75 +77,75 @@ public class ApiType {
     }
 
     /**
-     * Gets the value of the isid property.
+     * Gets the value of the szweight property.
+     * 
+     * @return
+     *     possible object is
+     *     {@link String }
+     *     
+     */
+    public String getSZWEIGHT() {
+        return szweight;
+    }
+
+    /**
+     * Sets the value of the szweight property.
+     * 
+     * @param value
+     *     allowed object is
+     *     {@link String }
+     *     
+     */
+    public void setSZWEIGHT(String value) {
+        this.szweight = value;
+    }
+
+    /**
+     * Gets the value of the colourcd property.
      * 
      * @return
      *     possible object is
      *     {@link BigInteger }
      *     
      */
-    public BigInteger getISID() {
-        return isid;
+    public BigInteger getCOLOURCD() {
+        return colourcd;
     }
 
     /**
-     * Sets the value of the isid property.
+     * Sets the value of the colourcd property.
      * 
      * @param value
      *     allowed object is
      *     {@link BigInteger }
      *     
      */
-    public void setISID(BigInteger value) {
-        this.isid = value;
+    public void setCOLOURCD(BigInteger value) {
+        this.colourcd = value;
     }
 
     /**
-     * Gets the value of the strnth property.
+     * Gets the value of the prodorderno property.
      * 
      * @return
      *     possible object is
-     *     {@link Float }
+     *     {@link String }
      *     
      */
-    public Float getSTRNTH() {
-        return strnth;
+    public String getPRODORDERNO() {
+        return prodorderno;
     }
 
     /**
-     * Sets the value of the strnth property.
+     * Sets the value of the prodorderno property.
      * 
      * @param value
      *     allowed object is
-     *     {@link Float }
+     *     {@link String }
      *     
      */
-    public void setSTRNTH(Float value) {
-        this.strnth = value;
-    }
-
-    /**
-     * Gets the value of the uomcd property.
-     * 
-     * @return
-     *     possible object is
-     *     {@link BigInteger }
-     *     
-     */
-    public BigInteger getUOMCD() {
-        return uomcd;
-    }
-
-    /**
-     * Sets the value of the uomcd property.
-     * 
-     * @param value
-     *     allowed object is
-     *     {@link BigInteger }
-     *     
-     */
-    public void setUOMCD(BigInteger value) {
-        this.uomcd = value;
+    public void setPRODORDERNO(String value) {
+        this.prodorderno = value;
     }
 
 }
