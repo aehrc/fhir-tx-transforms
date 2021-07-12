@@ -6,10 +6,15 @@
 package au.csiro.fhir.transforms.helper;
 
 import org.apache.commons.io.FileUtils;
+import org.apache.poi.ss.usermodel.Row;
+import org.apache.poi.xssf.usermodel.XSSFSheet;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 
 import java.io.*;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.List;
 
 public class Utility {
@@ -126,6 +131,45 @@ public class Utility {
 			System.out.println("\nOutput to release file : " + file.getAbsolutePath());
 		}
 
+	}
+	
+	public static List<List<String>> readXLSXFileSingleTab(String fileName, String sheetName, boolean heading) {
+		List<List<String>> lines = new ArrayList<>();
+		try {
+			FileInputStream file = new FileInputStream(fileName);
+			// Get the workbook instance for XLS file
+			XSSFWorkbook workbook = new XSSFWorkbook(file);
+			XSSFSheet sheet = workbook.getSheet(sheetName);
+
+			Iterator<Row> rowIterator = sheet.iterator();
+			if (heading) {
+				rowIterator.next(); // skip heading
+			}
+			while (rowIterator.hasNext()) {
+				Row row = rowIterator.next();
+				List<String> rowString = new LinkedList<>();
+
+				for (int i = 0; i < row.getLastCellNum(); i++) {
+					String cellCountent = "";
+					if (row.getCell(i) != null && row.getCell(i).getCellType() == 0) {
+						cellCountent = String.format("%.0f", row.getCell(i).getNumericCellValue());
+
+					} else if (row.getCell(i) != null && row.getCell(i).getCellType() == 1) {
+						cellCountent = row.getCell(i).getStringCellValue();
+					}
+					rowString.add(cellCountent);
+				}
+				lines.add(rowString);
+			}
+
+			workbook.close();
+			file.close();
+		} catch (FileNotFoundException e) {
+			e.printStackTrace();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		return lines;
 	}
 	
 	public static String jsonFileNameToEntry(String name) {

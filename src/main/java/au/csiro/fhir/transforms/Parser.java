@@ -7,6 +7,7 @@ package au.csiro.fhir.transforms;
 
 import java.io.IOException;
 import java.io.StringReader;
+import java.lang.reflect.InvocationTargetException;
 import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Enumeration;
@@ -158,16 +159,17 @@ public class Parser {
 		}
 	}
 	
-	private void parseDMD() throws IOException, ParseException, JAXBException {
+	private void parseDMD() throws IOException, ParseException, JAXBException, NoSuchMethodException, SecurityException, IllegalAccessException, IllegalArgumentException, InvocationTargetException {
 		String dmdFolder = props.getProperty("dmd.releaseFolder");	
 		String dmdSerial = props.getProperty("dmd.releaseSerial");	
 		String supportFile =  props.getProperty("dmd.supportFile");	
-		DMDParser parser = new DMDParser();
-		//parser.processCodeSystemWithUpdate( dmdFolder,dmdSerial ,outFolder, txServer, feedClient);
+		String ukSCTVersion =  props.getProperty("dmd.ukSCTVersion");	
+		DMDParser parser = new DMDParser(ukSCTVersion);
+		//parser.processCodeSystemWithUpdate( dmdFolder,dmdSerial ,supportFile,outFolder, txServer, feedClient);
 		parser.processSupportCodeSystemWithUpdate(dmdFolder, dmdSerial, outFolder, txServer, feedClient);
 	}
 
-	public void parseAll(String configFileName) throws IOException, ParserConfigurationException, SAXException, ParseException, JAXBException {
+	public void parseAll(String configFileName) throws IOException, ParserConfigurationException, SAXException, ParseException, JAXBException, NoSuchMethodException, SecurityException, IllegalAccessException, IllegalArgumentException, InvocationTargetException {
 		loadPropoerties(configFileName);
 		if (Boolean.valueOf(props.getProperty("process.nicip"))) {
 			parseNICIP();
@@ -211,6 +213,16 @@ public class Parser {
 		} catch (ParseException e) {
 			e.printStackTrace();
 		} catch (JAXBException e) {
+			e.printStackTrace();
+		} catch (NoSuchMethodException e) {
+			e.printStackTrace();
+		} catch (SecurityException e) {
+			e.printStackTrace();
+		} catch (IllegalAccessException e) {
+			e.printStackTrace();
+		} catch (IllegalArgumentException e) {
+			e.printStackTrace();
+		} catch (InvocationTargetException e) {
 			e.printStackTrace();
 		}
 	}
