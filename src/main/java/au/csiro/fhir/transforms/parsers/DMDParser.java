@@ -166,9 +166,8 @@ public class DMDParser {
 			String outFolder) throws IOException, NoSuchMethodException, SecurityException, IllegalAccessException,
 			IllegalArgumentException, InvocationTargetException, JAXBException {
 
-		System.out.println("Process DMD  " + version);
+		logger.info("Process DMD  " + version);
 
-		
 		File ingredientFile = new File(dmdFolder, "f_ingredient2_" + releaseSerial + ".xml");
 		File ampFile = new File(dmdFolder, "f_amp2_" + releaseSerial + ".xml");
 		File vtmFile = new File(dmdFolder, "f_vtm2_" + releaseSerial + ".xml");
@@ -176,8 +175,6 @@ public class DMDParser {
 		File vmpFile = new File(dmdFolder, "f_vmp2_" + releaseSerial + ".xml");
 		File vmppFile = new File(dmdFolder, "f_vmpp2_" + releaseSerial + ".xml");
 		File lookupFile = new File(dmdFolder, "f_lookup2_" + releaseSerial + ".xml");
-
-		
 
 		if(lookupTables.size()<1) {
 			loadLookupTables(lookupFile);
@@ -225,6 +222,8 @@ public class DMDParser {
 				codeSystem.addConcept(cdc);
 			}
 		}
+		
+		validate(codeSystem);
 		
 		return codeSystem;
 	}
@@ -372,7 +371,6 @@ public class DMDParser {
 
 			if (txServerUrl != null) {
 				FHIRClientR4 fhirClientR4 = new FHIRClientR4(txServerUrl);
-				//fhirClientR4.deleteCodeSystem(codeSystem.getIdBase());
 				fhirClientR4.createUpdateCodeSystem(codeSystem);
 			}
 
@@ -775,7 +773,7 @@ public class DMDParser {
 						Map<String, String> valueMap = lookupTables.get(lookUpNameMap.get(propertyName));
 						if (v.toString().length() > 0 && valueMap != null && valueMap.get(v.toString()) != null) {
 							Coding coding = new Coding();
-							coding.setSystem("http://digital.nhs.uk/fhir/CodeSystem/dmd/ONTFORMROUTE");
+							coding.setSystem("http://digital.nhs.uk/fhir/CodeSystem/dmd/ONT_FORM_ROUTE");
 							coding.setCode(v.toString());
 							coding.setDisplay(valueMap.get(v.toString()));
 							conceptPropertyComponent.setValue(coding);
@@ -806,5 +804,29 @@ public class DMDParser {
 			logger.info("register remove " + s + "\t" + conceptRegister.size());
 		}
 	}
+	
+	private void validate(CodeSystem codeSystem) {
+		logger.info("Validate Code System, size is " + codeSystem.getConcept().size());
+		Set<String> propertyNames = new HashSet<String>();
+		for(PropertyComponent p : codeSystem.getProperty()) {
+			propertyNames.add(p.getCode());
+		}
+		for(ConceptDefinitionComponent c : codeSystem.getConcept()) {
+			for(ConceptPropertyComponent cp : c.getProperty()) {
+				String pName = cp.getCode();
+				if(!pName.equals("parent")&&!propertyRigister.containsKey(pName)) {
+					logger.severe("Validate Error : " + pName + "\t" + c.getCode());
+				}
+				if(cp.getValue().getClass() == Coding.class) {
+					String lookupName = cp.getValueCoding().getSystem().replaceAll("http://digital.nhs.uk/fhir/CodeSystem/dmd/", "");
+					if(!lookupName.equals("http://digital.nhs.uk/fhir/CodeSystem/dmd")&&LookUpTag.findByName(lookupName)==null) {
+						logger.severe("Validate Error CodeSystem Reference: " + lookupName + "\t" + c.getCode());
+					}
+					
+				}
+			}
+		}
+	}
+
 
 }

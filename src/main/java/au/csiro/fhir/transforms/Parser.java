@@ -165,8 +165,8 @@ public class Parser {
 		String supportFile =  props.getProperty("dmd.supportFile");	
 		String ukSCTVersion =  props.getProperty("dmd.ukSCTVersion");	
 		DMDParser parser = new DMDParser(ukSCTVersion);
-		//parser.processCodeSystemWithUpdate( dmdFolder,dmdSerial ,supportFile,outFolder, txServer, feedClient);
 		parser.processSupportCodeSystemWithUpdate(dmdFolder, dmdSerial, outFolder, txServer, feedClient);
+		parser.processCodeSystemWithUpdate( dmdFolder,dmdSerial ,supportFile,outFolder, txServer, feedClient);
 	}
 
 	public void parseAll(String configFileName) throws IOException, ParserConfigurationException, SAXException, ParseException, JAXBException, NoSuchMethodException, SecurityException, IllegalAccessException, IllegalArgumentException, InvocationTargetException {

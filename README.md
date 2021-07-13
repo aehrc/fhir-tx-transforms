@@ -15,9 +15,6 @@ Each supported resources (list below) has individual controls and configuration.
 FHIR Terminology Server URL
 >tx.server.url=TERMINOLOGY-SERVER-URL
 
-Control the server update when execute the parser
->server.update=TRUE/FALSE
-
 Local output folder for FHIR resources
 >output.dir=PATH-TO-LOCAL-FOLDER
 
@@ -33,6 +30,8 @@ Control running of individual resource transform
 > process.opcs=TRUE/FALSE
 
 > process.ods=TRUE/FALSE
+
+> process.dmd=TRUE/FALSE
 
 READ V2
 >ctv2.coreFile=PATH-TO-LOCAL-FILE
@@ -58,6 +57,17 @@ OPCS-4
 ODS
 >ods.version.VERSION.zipfile=PATH-TO-LOCAL-FILE
 
+DM+D
+>dmd.releaseFolder=PATH-TO-LOCAL-FOLDER
+
+>dmd.releaseSerial=Numeric value in DM+D file names
+
+>dmd.supportFile=Supported DM+D Excel file from NHS
+
+>dmd.ukSCTVersion=Related SCT UK version
+
+>* The serial number used in dm+d file, example f_amp2_3080420.xml, the serial number should be 3080420
+
 Support multiple version
 
 To add multiple version processing for single resource, separate the configuration lines for each version. 
@@ -76,6 +86,7 @@ The FHIR Terminology Transforms project supports transforming the following term
 - ODS
 - OPCS-4
 - ICD-10-UK
+- DM+D
 
 ## Required resources for processing 
 The resources are hosted on the Technology Reference data Update Distribution (NHS TRUD) web site. The resource files need to be prepared before transformation. 
@@ -112,4 +123,10 @@ The resources are hosted on the Technology Reference data Update Distribution (N
  - Folder/File: EXTRACTED_FOLDER/Content/ICD10_Edition_VERSION_CodesAndTitlesAndMetadata_GB_DATE.txt
  - Transformed Versions: 5th.4th
  
-Copyright © 2020, Commonwealth Scientific and Industrial Research Organisation (CSIRO) ABN 41 687 119 230. Licensed under the CSIRO Open Source Software Licence Agreement.
+### DM+D
+ - Resources URL :
+[https://isd.digital.nhs.uk/trud3/user/authenticated/group/0/pack/6/subpack/24/releases]
+ - Folder/File: EXTRACTED_FOLDER/
+ - Transformed Versions: 202007.0.0,202004.1.0
+ 
+Copyright © 2020, Commonwealth Scientific and Industrial Research Organisation (CSIRO) ABN 41 687 119 230. Licensed under the CSIRO Open Source Software License Agreement.
