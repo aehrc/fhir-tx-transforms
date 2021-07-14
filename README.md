@@ -62,11 +62,11 @@ DM+D
 
 >dmd.releaseSerial=Numeric value in DM+D file names
 
->dmd.supportFile=Supported DM+D Excel file from NHS
-
 >dmd.ukSCTVersion=Related SCT UK version
 
 >* The serial number used in dm+d file, example f_amp2_3080420.xml, the serial number should be 3080420
+
+>* The transform use an excel config file internally from NHS, it is in src/main/resources
 
 Support multiple version
 

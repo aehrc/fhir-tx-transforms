@@ -162,7 +162,7 @@ public class Parser {
 	private void parseDMD() throws IOException, ParseException, JAXBException, NoSuchMethodException, SecurityException, IllegalAccessException, IllegalArgumentException, InvocationTargetException {
 		String dmdFolder = props.getProperty("dmd.releaseFolder");	
 		String dmdSerial = props.getProperty("dmd.releaseSerial");	
-		String supportFile =  props.getProperty("dmd.supportFile");	
+		String supportFile =  "dm+d Content For Terminology Server.xlsx";	
 		String ukSCTVersion =  props.getProperty("dmd.ukSCTVersion");	
 		DMDParser parser = new DMDParser(ukSCTVersion);
 		parser.processSupportCodeSystemWithUpdate(dmdFolder, dmdSerial, outFolder, txServer, feedClient);

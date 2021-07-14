@@ -9,6 +9,7 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
+import java.io.InputStream;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -395,7 +396,9 @@ public class DMDParser {
 	 * @param dmdContentFile
 	 */
 	private void registerProperty(String tabName, String supportFile, Map<String, PropertyComponent> propertyRigister) {
-		for (List<String> line : Utility.readXLSXFileSingleTab(supportFile, tabName, false)) {
+		InputStream supportFileInputStream = getFileFromResourceAsStream(supportFile);
+		logger.info("Register property for " + tabName);
+		for (List<String> line : Utility.readXLSXFileSingleTab(supportFileInputStream, tabName, false)) {
 			if (line.size() > 0) {
 				String name = line.get(0);
 				if (name.startsWith("<")) {
@@ -777,7 +780,7 @@ public class DMDParser {
 							coding.setCode(v.toString());
 							coding.setDisplay(valueMap.get(v.toString()));
 							conceptPropertyComponent.setValue(coding);
-							System.out.println("TEMP Solution - " + fieldName + "\t" + propertyName + "\t" + conceptPropertyComponent.getValue().toString() );
+							//System.out.println("TEMP Solution - " + fieldName + "\t" + propertyName + "\t" + conceptPropertyComponent.getValue().toString() );
 						}
 					}
 					conceptRegister.get(id).addProperty(conceptPropertyComponent);
@@ -826,6 +829,21 @@ public class DMDParser {
 				}
 			}
 		}
+	}
+	
+	private InputStream getFileFromResourceAsStream(String fileName) {
+
+		// The class loader that loaded the class
+		ClassLoader classLoader = getClass().getClassLoader();
+		InputStream inputStream = classLoader.getResourceAsStream(fileName);
+
+		// the stream holding the file content
+		if (inputStream == null) {
+			throw new IllegalArgumentException("file not found! " + fileName);
+		} else {
+			return inputStream;
+		}
+
 	}
 
 

@@ -21,9 +21,9 @@ public class Utility {
 
 	public static List<String> readTxtFile(String fileName, boolean heading) throws IOException {
 		File file = new File(fileName);
-		return readTxtFile(file,heading);
+		return readTxtFile(file, heading);
 	}
-	
+
 	public static List<String> readTxtFile(File file, boolean heading) throws IOException {
 		List<String> con = FileUtils.readLines(file, Charset.defaultCharset());
 		if (heading) {
@@ -32,8 +32,6 @@ public class Utility {
 		return con;
 
 	}
-	
-	
 
 	public static String readInputToString(InputStream is) {
 		try {
@@ -46,9 +44,9 @@ public class Utility {
 			}
 			return sb.toString();
 		} catch (FileNotFoundException e) {
-						e.printStackTrace();
+			e.printStackTrace();
 		} catch (IOException e) {
-		
+
 			e.printStackTrace();
 		}
 
@@ -76,9 +74,6 @@ public class Utility {
 		return null;
 
 	}
-	
-	
-
 
 	public static void toTextFile(ArrayList<String> con, String fileName) {
 
@@ -115,6 +110,7 @@ public class Utility {
 		}
 
 	}
+
 	public static void toTextFile(String con, File file) {
 
 		if (file != null) {
@@ -132,11 +128,17 @@ public class Utility {
 		}
 
 	}
-	
-	public static List<List<String>> readXLSXFileSingleTab(String fileName, String sheetName, boolean heading) {
+
+	public static List<List<String>> readXLSXFileSingleTab(String fileName, String sheetName, boolean heading) throws FileNotFoundException {
+
+		FileInputStream file = new FileInputStream(fileName);
+
+		return readXLSXFileSingleTab(file, sheetName, heading);
+	}
+
+	public static List<List<String>> readXLSXFileSingleTab(InputStream file, String sheetName, boolean heading) {
 		List<List<String>> lines = new ArrayList<>();
 		try {
-			FileInputStream file = new FileInputStream(fileName);
 			// Get the workbook instance for XLS file
 			XSSFWorkbook workbook = new XSSFWorkbook(file);
 			XSSFSheet sheet = workbook.getSheet(sheetName);
@@ -171,11 +173,13 @@ public class Utility {
 		}
 		return lines;
 	}
-	
+
 	public static String jsonFileNameToEntry(String name) {
 
 		return name.replaceAll(".json", "_Entry.json");
 
 	}
+
+	
 
 }
