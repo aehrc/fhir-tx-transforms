@@ -38,8 +38,13 @@ public class Parser {
 	Properties props = new Properties();
 	String outFolder = null;
 	String txServer = null;
-	String feedServer = null;
 	FeedClient feedClient= null;
+	
+	String feedServer = null;
+	String feedClientId = null;
+	String feedClientSecret = null;
+	String authRealm = null;
+	String authServer = null;
 
 	private void loadPropoerties(String configFileName) throws IOException {
 
@@ -56,8 +61,13 @@ public class Parser {
 			System.out.printf("FHIR terminology server URL is %s \n", txServer);
 		}	
 		feedServer = props.getProperty("feed.server.name");
-		if (feedServer != null) {
-			feedClient = new FeedClient(feedServer);
+		feedClientId = props.getProperty("feed.server.client.id");
+		feedClientSecret= props.getProperty("feed.server.client.secret");
+		authRealm = props.getProperty("auth.server.realm");
+		authServer = props.getProperty("auth.server");
+
+		if (feedServer != null && feedClientId != null && feedClientSecret != null && authRealm != null && authServer != null ) {
+			feedClient = new FeedClient(feedServer, feedClientId, feedClientSecret, authRealm ,authServer);
 			System.out.printf("Atomio feed is %s \n", feedServer);
 		}
 	}

@@ -11,6 +11,7 @@ import ca.uhn.fhir.rest.client.api.IClientInterceptor;
 import ca.uhn.fhir.rest.client.api.IGenericClient;
 import ca.uhn.fhir.rest.client.api.IHttpRequest;
 import ca.uhn.fhir.rest.client.api.IHttpResponse;
+import ca.uhn.fhir.rest.server.exceptions.UnclassifiedServerFailureException;
 import ca.uhn.fhir.rest.server.exceptions.UnprocessableEntityException;
 
 import org.hl7.fhir.instance.model.api.IBaseOperationOutcome;
@@ -52,6 +53,11 @@ public class FHIRClientR4 {
 			MethodOutcome outcome = client.update().resource(codeSystem).execute();
 			System.out.println("Code System Updated, Got ID: " + outcome.getId().getValue());
 		} catch (UnprocessableEntityException e) {
+			System.out.println(e.getResponseBody());
+			System.out.println(e.getMessage());
+			e.printStackTrace();
+		} 
+		catch (UnclassifiedServerFailureException e) {
 			System.out.println(e.getResponseBody());
 			System.out.println(e.getMessage());
 			e.printStackTrace();

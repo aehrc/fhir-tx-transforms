@@ -31,19 +31,31 @@ public class FeedClient {
 	
 	final Logger logger = Logger.getLogger(FeedClient.class.getName());
 
-	final String syndServer = "https://synd.ontoserver.csiro.au/feed/";
 	
-	final String syndCientID = "syndication-upload";
-	final String syndSecret = "67c4466b-1186-4e36-a879-746a585465f0";
-	final String realm = "aehrc";
-	final String authServer = "https://auth.ontoserver.csiro.au";
+	String syndCientID;
+	String syndSecret;
+	String realm;
+	String authServer;
 	
 	
 	String feed;
+	
 	Client client = null;
 
 	public FeedClient(String feedName) {
-		feed = syndServer + feedName;
+		feed = feedName;
+		Feature feature = new LoggingFeature(logger, Level.INFO, null, null);
+		client = ClientBuilder.newBuilder().register(feature).build();
+		
+	}
+	
+	public FeedClient(String feedName, String cid, String pwd, String realm, String auth) {
+		syndCientID = cid;
+		syndSecret = pwd;
+		this.realm = realm;
+		authServer = auth;
+		
+		feed = feedName;
 		Feature feature = new LoggingFeature(logger, Level.INFO, null, null);
 		client = ClientBuilder.newBuilder().register(feature).build();
 		
