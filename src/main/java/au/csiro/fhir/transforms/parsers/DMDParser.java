@@ -166,7 +166,6 @@ public class DMDParser {
 	final String title_lookup = "dm+d ";
 	final Pattern versionPattern = Pattern.compile("(.*)(nhsbsa)(_)(dmd)(_)([0-9]+\\.[0-9]\\.[0-9])(_)([0-9]+)");
 
-	String ukSCTVersion;
 
 	// Map by concept type to concept list.
 	Map<ConceptType, List<ConceptDefinitionComponent>> allConcepts = new HashMap<ConceptType, List<ConceptDefinitionComponent>>();
@@ -181,8 +180,7 @@ public class DMDParser {
 	// look up table which are not in a seperated code system 
 	Map<LookUpTag, Map<String, String>> lookupTables_concepts = new HashMap<LookUpTag, Map<String, String>>();
 
-	public DMDParser(String ukSCT) {
-		ukSCTVersion = ukSCT;
+	public DMDParser() {
 	}
 
 	public CodeSystem processCodeSystem(String dmdFolder, String releaseSerial, String supportFile, String version,
@@ -264,7 +262,7 @@ public class DMDParser {
 		//Adding All Concepts
 		for (Map.Entry<ConceptType, List<ConceptDefinitionComponent>> e : allConcepts.entrySet()) {
 			for (ConceptDefinitionComponent cdc : e.getValue()) {
-				//codeSystem.addConcept(cdc);
+				codeSystem.addConcept(cdc);
 			}
 		}
 		
@@ -340,8 +338,8 @@ public class DMDParser {
 		File outFile = new File(outFolder, outFileName);
 
 		FhirContext ctx = FhirContext.forR4();
-		Utility.toTextFile(ctx.newJsonParser().setPrettyPrint(true).encodeResourceToString(cs), outFile);
-		//Utility.toTextFile(ctx.newJsonParser().encodeResourceToString(cs), outFile);
+		//Utility.toTextFile(ctx.newJsonParser().setPrettyPrint(true).encodeResourceToString(cs), outFile);
+		Utility.toTextFile(ctx.newJsonParser().encodeResourceToString(cs), outFile);
 
 		if (txServerUrl != null) {
 			FHIRClientR4 fhirClientR4 = new FHIRClientR4(txServerUrl);
@@ -581,6 +579,8 @@ public class DMDParser {
 				products.getREIMBURSEMENTINFO().getREIMBINFO());
 		transferComplexType(conceptRegister, propertyRigister,"PRNTAPPID" , null, null, null, null, au.csiro.fhir.transforms.xml.dmd.v2_3.ampp.ContentType.class,
 				products.getCOMBCONTENT().getCCONTENT());
+		transferComplexType(conceptRegister, propertyRigister,"CHLDAPPID" , null, null, null, null, au.csiro.fhir.transforms.xml.dmd.v2_3.ampp.ContentType.class,
+				products.getCOMBCONTENT().getCCONTENT());
 		conceptIDDuplicationCheck(conceptIdSet, conceptRegister, keyID);
 		return new ArrayList<ConceptDefinitionComponent>(conceptRegister.values());
 
@@ -629,6 +629,8 @@ public class DMDParser {
 		transferComplexType(conceptRegister, propertyRigister, keyID, null, null, null, null, DtInfoType.class,
 				vmpp.getDRUGTARIFFINFO().getDTINFO());
 		transferComplexType(conceptRegister, propertyRigister,"PRNTVPPID" , null, null, null, null, au.csiro.fhir.transforms.xml.dmd.v2_3.vmpp.ContentType.class,
+				vmpp.getCOMBCONTENT().getCCONTENT());
+		transferComplexType(conceptRegister, propertyRigister,"CHLDVPPID" , null, null, null, null, au.csiro.fhir.transforms.xml.dmd.v2_3.vmpp.ContentType.class,
 				vmpp.getCOMBCONTENT().getCCONTENT());
 		conceptIDDuplicationCheck(conceptIdSet, conceptRegister, keyID);
 		return new ArrayList<ConceptDefinitionComponent>(conceptRegister.values());
@@ -778,7 +780,6 @@ public class DMDParser {
 					ConceptDefinitionDesignationComponent designation = new ConceptDefinitionDesignationComponent();
 					Coding coding = new Coding();
 					coding.setSystem("http://snomed.info/sct");
-					coding.setVersion("http://snomed.info/sct/83821000000107/version/" + ukSCTVersion);
 					coding.setCode("900000000000013009");
 					designation.setLanguage("en");
 					designation.setValue(v.toString());

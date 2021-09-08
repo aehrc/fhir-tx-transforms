@@ -173,8 +173,7 @@ public class Parser {
 		String dmdFolder = props.getProperty("dmd.releaseFolder");	
 		String dmdSerial = props.getProperty("dmd.releaseSerial");	
 		String supportFile =  "dm+d Content For Terminology Server.xlsx";	
-		String ukSCTVersion =  props.getProperty("dmd.ukSCTVersion");	
-		DMDParser parser = new DMDParser(ukSCTVersion);
+		DMDParser parser = new DMDParser();
 		parser.processSupportCodeSystemWithUpdate(dmdFolder, dmdSerial, outFolder, txServer, feedClient);
 		parser.processCodeSystemWithUpdate( dmdFolder,dmdSerial ,supportFile,outFolder, txServer, feedClient);
 	}
