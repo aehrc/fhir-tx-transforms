@@ -13,6 +13,7 @@ import java.io.InputStream;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -24,7 +25,9 @@ import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import javax.sound.sampled.Line;
 import javax.xml.bind.JAXBContext;
+import javax.xml.bind.JAXBElement;
 import javax.xml.bind.JAXBException;
 import javax.xml.bind.annotation.XmlElement;
 
@@ -42,9 +45,16 @@ import org.hl7.fhir.r4.model.CodeSystem.PropertyComponent;
 import org.hl7.fhir.r4.model.CodeSystem.PropertyType;
 import org.hl7.fhir.r4.model.CodeType;
 import org.hl7.fhir.r4.model.Coding;
+import org.hl7.fhir.r4.model.ConceptMap;
+import org.hl7.fhir.r4.model.ConceptMap.ConceptMapGroupComponent;
+import org.hl7.fhir.r4.model.ConceptMap.OtherElementComponent;
+import org.hl7.fhir.r4.model.ConceptMap.SourceElementComponent;
+import org.hl7.fhir.r4.model.ConceptMap.TargetElementComponent;
 import org.hl7.fhir.r4.model.DateTimeType;
 import org.hl7.fhir.r4.model.DecimalType;
+import org.hl7.fhir.r4.model.Enumerations.ConceptMapEquivalence;
 import org.hl7.fhir.r4.model.Enumerations.PublicationStatus;
+import org.hl7.fhir.r4.model.IntegerType;
 import org.hl7.fhir.r4.model.StringType;
 
 import au.csiro.fhir.transforms.helper.FHIRClientR4;
@@ -52,6 +62,9 @@ import au.csiro.fhir.transforms.helper.FeedClient;
 import au.csiro.fhir.transforms.helper.FeedUtility;
 import au.csiro.fhir.transforms.helper.Utility;
 import au.csiro.fhir.transforms.helper.atomio.Entry;
+import au.csiro.fhir.transforms.xml.dmd.gtin.AMPPType;
+import au.csiro.fhir.transforms.xml.dmd.gtin.GTINDETAILS;
+import au.csiro.fhir.transforms.xml.dmd.gtin.GTINType;
 import au.csiro.fhir.transforms.xml.dmd.v2_3.amp.ACTUALMEDICINALPRODUCTS;
 import au.csiro.fhir.transforms.xml.dmd.v2_3.amp.AmpType;
 import au.csiro.fhir.transforms.xml.dmd.v2_3.amp.ApiType;
@@ -82,6 +95,7 @@ import au.csiro.fhir.transforms.xml.dmd.v2_3.vmpp.VmppType;
 import au.csiro.fhir.transforms.xml.dmd.v2_3.vtm.VIRTUALTHERAPEUTICMOIETIES;
 import au.csiro.fhir.transforms.xml.dmd.v2_3.vtm.VIRTUALTHERAPEUTICMOIETIES.VTM;
 import ca.uhn.fhir.context.FhirContext;
+import javassist.expr.Instanceof;
 
 enum ConceptType {
 	/*
@@ -165,6 +179,11 @@ public class DMDParser {
 	final String baseURL_ValueSet_Lookup = "https://dmd.nhs.uk/vs";
 	final String title_lookup = "dm+d ";
 	final Pattern versionPattern = Pattern.compile("(.*)(nhsbsa)(_)(dmd)(_)([0-9]+\\.[0-9]\\.[0-9])(_)([0-9]+)");
+	
+	final String gtinMapID = "ConceptMap-dmd-gtin";
+	final String baseURL_ConceptMap = "https://dmd.nhs.uk/conceptmap/gtin";
+	final String gtinMapTitle = "Dictionary of medicines and devices (dm+d) to GTIN Map";
+	final String baseURL_CodeSystem_Gtin = "https://www.gs1.org/gtin";
 
 
 	// Map by concept type to concept list.
@@ -181,6 +200,106 @@ public class DMDParser {
 	Map<LookUpTag, Map<String, String>> lookupTables_concepts = new HashMap<LookUpTag, Map<String, String>>();
 
 	public DMDParser() {
+	}
+	
+	
+	public ConceptMap processGtinMapping(String gtinFile, String version, String outFolder) throws JAXBException, FileNotFoundException{
+
+		ConceptMap conceptMap = new ConceptMap();
+		logger.info("Process Gtin Concept Map  " + version);
+		Map<String,Set<String>> activeMap = new HashMap<String, Set<String>>();
+		Map<String,Set<String>> retiredMap = new HashMap<String, Set<String>>();
+		conceptMap.setId(gtinMapID + "-" + version.replaceAll("\\.", ""));
+		conceptMap.setUrl(baseURL_ConceptMap).setDescription(
+				"A FHIR ConceptMap between the Dictionary of medicines and devices (dm+d) and GTIN (Global Trade Item Number), generated from the dm+d XML distribution")
+				.setVersion(version).setTitle(gtinMapTitle).setName(gtinMapTitle).setStatus(PublicationStatus.ACTIVE)
+				.setExperimental(true).setPublisher("NHS UK");
+		ConceptMapGroupComponent groupComponent = new ConceptMapGroupComponent();
+		conceptMap.addGroup(groupComponent);
+		
+		groupComponent.setSource(baseURL_CodeSystem);
+		groupComponent.setSourceVersion(version);
+		groupComponent.setTarget(baseURL_CodeSystem_Gtin);
+		
+		JAXBContext context = JAXBContext.newInstance(au.csiro.fhir.transforms.xml.dmd.gtin.ObjectFactory.class);
+		
+		GTINDETAILS details = (GTINDETAILS) context.createUnmarshaller()
+				.unmarshal(new FileReader(gtinFile));
+		for(AMPPType ampp : details.getAMPPS().getAMPP()) {
+			String amppID = "";
+			// Get ampp ID
+			for(Object o : ampp.getAMPPIDAndGTINDATA()) {
+				if(o instanceof BigInteger) {
+					amppID = o.toString(); 
+				}
+			}
+			if(!activeMap.containsKey(amppID)) {
+				activeMap.put(amppID, new HashSet<String>());
+				retiredMap.put(amppID, new HashSet<String>());
+			}
+			// Print gtin
+			for(Object o : ampp.getAMPPIDAndGTINDATA()) {
+				if(o instanceof GTINType) {
+					GTINType gt = (GTINType) o; 
+					String gtin= null;
+					String startDt = null;
+					String endDT = null;
+					for(Object gto : gt.getGTINAndSTARTDTAndENDDT()) {
+						JAXBElement<Object> jaxb = (JAXBElement<Object>) gto;
+						
+						if(jaxb.getName().toString().equals("GTIN")) { 
+							gtin = jaxb.getValue().toString();
+						}
+						else if(jaxb.getName().toString().equals("STARTDT")) { 
+							startDt = jaxb.getValue().toString();
+						}
+						else if(jaxb.getName().toString().equals("ENDDT")) { 
+							endDT = jaxb.getValue().toString();
+						}  
+					}
+					if(endDT == null) {
+						activeMap.get(amppID).add(gtin);
+					}
+					else {
+						retiredMap.get(amppID).add(gtin);
+					}
+				}
+				
+			}
+		}
+		int count = 0;
+		for(String amppid : activeMap.keySet()) {
+			SourceElementComponent sourceElementComponent = new SourceElementComponent();
+			sourceElementComponent.setCode(amppid);
+		
+			for(String g : activeMap.get(amppid)) {
+				TargetElementComponent target = new TargetElementComponent();
+				//System.out.println(amppid + "\t" + g + "\t" + "Active");
+				target.setCode(g);
+				target.setEquivalence(ConceptMapEquivalence.RELATEDTO);
+				OtherElementComponent product = new OtherElementComponent();
+				product.setProperty("mapping_status");
+				product.setValue("active");
+				target.addProduct(product);
+				sourceElementComponent.addTarget(target);
+			}
+			for(String g : retiredMap.get(amppid)) {
+				TargetElementComponent target = new TargetElementComponent();		
+				target.setCode(g);
+				target.setEquivalence(ConceptMapEquivalence.RELATEDTO);
+				OtherElementComponent product = new OtherElementComponent();
+				product.setProperty("mapping_status");
+				product.setValue("retired");
+				target.addProduct(product);
+				sourceElementComponent.addTarget(target);
+			}
+			groupComponent.addElement(sourceElementComponent);
+			if(count++ > 10) break;
+					
+		}
+		
+		return conceptMap;
+		
 	}
 
 	public CodeSystem processCodeSystem(String dmdFolder, String releaseSerial, String supportFile, String version,
@@ -222,7 +341,7 @@ public class DMDParser {
 		logger.info("Property Register " + propertyRigister.size());
 		
 		for(String name : propertyRigister.keySet()) {
-			logger.info("Property " + name + "with type" + propertyRigister.get(name).getType().getDisplay());
+			logger.info("Property " + name + " with type " + propertyRigister.get(name).getType().getDisplay());
 		}
 
 		// Add all property into CodeSystem
@@ -355,6 +474,35 @@ public class DMDParser {
 		}
 
 	}
+	
+	public void processGtinMappingmWithUpdate(String dmdFolder, String gtinFile, String outFolder,String txServerUrl, FeedClient feedClient) throws IOException, NoSuchMethodException, SecurityException, IllegalAccessException, IllegalArgumentException, InvocationTargetException, JAXBException {
+
+		String version = processVersionNumber(dmdFolder);
+		ConceptMap cm = processGtinMapping(gtinFile, version, outFolder);
+		
+		String outFileName = "ConceptMap-dmd-gtin" + version + ".json";
+		File outFile = new File(outFolder, outFileName);
+		FhirContext ctx = FhirContext.forR4();
+		//Utility.toTextFile(ctx.newJsonParser().setPrettyPrint(true).encodeResourceToString(cm), outFile);
+		Utility.toTextFile(ctx.newJsonParser().encodeResourceToString(cm), outFile);
+
+		if (txServerUrl != null) {
+			FHIRClientR4 fhirClientR4 = new FHIRClientR4(txServerUrl);
+			fhirClientR4.createUpdateMapWithHeader(cm);
+
+		}
+		/*
+		if (feedClient != null) {
+			Entry entry = FeedUtility.createFeedEntry_CodeSystem(c, outFileName);
+			String entryFileName = Utility.jsonFileNameToEntry(outFileName);
+			Utility.toTextFile(FeedUtility.entryToJson(entry), new File(outFolder, entryFileName));
+			feedClient.updateEntryToNHSFeed(entry, new File(outFolder, entryFileName),
+					new File(outFolder, outFileName));
+		}
+		*/
+		
+
+	}
 
 	public void processSupportCodeSystemWithUpdate(String dmdFolder, String dmdSerial, String outFolder,
 			String txServerUrl, FeedClient feedClient) throws IOException, JAXBException {
@@ -433,14 +581,25 @@ public class DMDParser {
 				if (name.startsWith("<")) {
 					name = name.replaceAll("[<>]", "");
 					if (!propertyRigister.containsKey(name)) {
-						String type = line.get(2);
+						String type = line.get(2).trim();
 						PropertyComponent propertyComponent = new PropertyComponent();
 						propertyComponent.setCode(name).setDescription(name);
 						if (type.equals("SCTID")) {
 							propertyComponent.setType(PropertyType.CODING);
-						} else if (type.equals("YYYY-MM-DD")) {
+						} 
+						
+						else if (type.equals("YYYY-MM-DD")) {
 							propertyComponent.setType(PropertyType.DATETIME);
-						} else {
+						} 
+						
+						else if (type.equalsIgnoreCase("decimal")) {
+							propertyComponent.setType(PropertyType.DECIMAL);
+						}
+						
+						else if (type.equalsIgnoreCase("Integer")) {
+							propertyComponent.setType(PropertyType.INTEGER);
+						}
+						else {
 							propertyComponent.setType(PropertyType.STRING);
 							if (line.size() > 6 && line.get(6) != null) {
 								String lookup = line.get(6);
@@ -791,8 +950,6 @@ public class DMDParser {
 					addedParentProperty.setCode("parent");
 					addedParentProperty.setValue(new CodeType(v.toString()));
 					conceptRegister.get(id).addProperty(addedParentProperty);
-					// System.out.println(nativeParent.getFullName() + "\t" + id + "\t" +
-					// propertyName + "\t" + v.toString());
 				} else if (!fieldName.equalsIgnoreCase(idField) && v != null && v.toString().length() > 0) {
 					ConceptPropertyComponent conceptPropertyComponent = new ConceptPropertyComponent();
 					PropertyComponent propertyComponent = propertyRigister.get(propertyName);
@@ -822,18 +979,24 @@ public class DMDParser {
 							conceptPropertyComponent.setValue(coding);
 						}
 
-					} else if (propertyComponent.getType() == PropertyType.DATETIME) {
+					} 
+					else if (propertyComponent.getType() == PropertyType.DATETIME) {
 						conceptPropertyComponent.setValue(new DateTimeType(v.toString()));
 					}
 
 					else if (propertyComponent.getType() == PropertyType.DECIMAL) {
 						conceptPropertyComponent.setValue(new DecimalType(v.toString()));
-						System.out.println("id" + "\t" + v.toString());
+
+					}
+					
+					else if (propertyComponent.getType() == PropertyType.INTEGER) {
+						conceptPropertyComponent.setValue(new IntegerType(v.toString()));
 					}
 
 					else {
 						conceptPropertyComponent.setValue(new StringType(v.toString()));
 					}
+					
 					conceptRegister.get(id).addProperty(conceptPropertyComponent);
 
 				}

@@ -196,8 +196,8 @@ public class NICIPParser {
 		if (txServerUrl != null) {
 			FHIRClientR4 fhirClientR4 = new FHIRClientR4(txServerUrl);
 			fhirClientR4.createUpdateCodeSystem(codeSystem);
-			fhirClientR4.createUpdateMap(conceptMap_sct);
-			fhirClientR4.createUpdateMap(conceptMap_opcs);
+			fhirClientR4.createUpdateConceptMap(conceptMap_sct);
+			fhirClientR4.createUpdateConceptMap(conceptMap_opcs);
 
 		}
 

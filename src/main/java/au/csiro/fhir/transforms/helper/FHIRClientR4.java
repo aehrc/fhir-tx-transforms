@@ -56,8 +56,7 @@ public class FHIRClientR4 {
 			System.out.println(e.getResponseBody());
 			System.out.println(e.getMessage());
 			e.printStackTrace();
-		} 
-		catch (UnclassifiedServerFailureException e) {
+		} catch (UnclassifiedServerFailureException e) {
 			System.out.println(e.getResponseBody());
 			System.out.println(e.getMessage());
 			e.printStackTrace();
@@ -68,7 +67,7 @@ public class FHIRClientR4 {
 	}
 
 	public void deleteCodeSystem(String id) {
-		
+
 		try {
 			System.out.println("Delete CodeSystem with " + id);
 			MethodOutcome outcome = (MethodOutcome) client.delete().resourceById("CodeSystem", id).execute();
@@ -125,9 +124,49 @@ public class FHIRClientR4 {
 	 * 
 	 * @param conceptMap
 	 */
-	public void createUpdateMap(ConceptMap conceptMap) {
-		MethodOutcome outcome = client.update().resource(conceptMap).execute();
-		System.out.println("Concept Map Updated, Got ID: " + outcome.getId().getValue());
+	public void createUpdateMapWithHeader(ConceptMap conceptMap) {
+		IClientInterceptor clientInterceptor = new IClientInterceptor() {
+
+			@Override
+			public void interceptResponse(IHttpResponse theResponse) throws IOException {
+				// TODO Auto-generated method stub
+
+			}
+
+			@Override
+			public void interceptRequest(IHttpRequest theRequest) {
+				theRequest.addHeader("Prefer", "return=minimal");
+				theRequest.addHeader("Prefer", "return=OperationOutcome");
+
+			}
+		};
+		client.registerInterceptor(clientInterceptor);
+		createUpdateConceptMap(conceptMap);
+	}
+
+	/**
+	 * Create code system if the resource with the ID is not in the server,
+	 * Otherwise updated the code System
+	 * 
+	 * @param codeSystem
+	 */
+	public void createUpdateConceptMap(ConceptMap cm) {
+		try {
+			System.out.println("Create/Update ConceptMap with " + client.getServerBase());
+			MethodOutcome outcome = client.update().resource(cm).execute();
+			System.out.println("ConceptMap Updated, Got ID: " + outcome.getId().getValue());
+		} catch (UnprocessableEntityException e) {
+			System.out.println(e.getResponseBody());
+			System.out.println(e.getMessage());
+			e.printStackTrace();
+		} catch (UnclassifiedServerFailureException e) {
+			System.out.println(e.getResponseBody());
+			System.out.println(e.getMessage());
+			e.printStackTrace();
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+
 	}
 
 	/**
