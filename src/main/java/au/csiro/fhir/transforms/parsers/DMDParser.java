@@ -96,6 +96,7 @@ import au.csiro.fhir.transforms.xml.dmd.v2_3.vtm.VIRTUALTHERAPEUTICMOIETIES;
 import au.csiro.fhir.transforms.xml.dmd.v2_3.vtm.VIRTUALTHERAPEUTICMOIETIES.VTM;
 import ca.uhn.fhir.context.FhirContext;
 import javassist.expr.Instanceof;
+import sun.nio.cs.ext.ISCII91;
 
 enum ConceptType {
 	/*
@@ -985,7 +986,25 @@ public class DMDParser {
 					}
 
 					else if (propertyComponent.getType() == PropertyType.DECIMAL) {
-						conceptPropertyComponent.setValue(new DecimalType(v.toString()));
+						// in the xsd   <xs:element name="STRNT_NMRTR_VAL"   type="xs:float"    minOccurs="0"  maxOccurs="1" />
+						// So the v should always be float number
+						if (!(v instanceof Float)) {
+							System.out.println("check data for float value");
+						}
+						else {
+							float vf = ((Float) v).floatValue();
+							int vf_int = (int) vf;
+							double diff = vf - vf_int;
+							if(diff == 0) {
+								//System.out.println("Change " + v.toString() + " to " + vf_int);
+								conceptPropertyComponent.setValue(new DecimalType(vf_int));
+							}
+							else {
+								//System.out.println("Keep " + v.toString());
+								conceptPropertyComponent.setValue(new DecimalType(v.toString()));
+							}
+						}
+						
 
 					}
 					
