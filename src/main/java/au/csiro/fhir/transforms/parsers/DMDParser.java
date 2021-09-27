@@ -95,8 +95,6 @@ import au.csiro.fhir.transforms.xml.dmd.v2_3.vmpp.VmppType;
 import au.csiro.fhir.transforms.xml.dmd.v2_3.vtm.VIRTUALTHERAPEUTICMOIETIES;
 import au.csiro.fhir.transforms.xml.dmd.v2_3.vtm.VIRTUALTHERAPEUTICMOIETIES.VTM;
 import ca.uhn.fhir.context.FhirContext;
-import javassist.expr.Instanceof;
-import sun.nio.cs.ext.ISCII91;
 
 enum ConceptType {
 	/*
