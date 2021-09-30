@@ -1,7 +1,7 @@
 /*
  * Copyright © 2018-2020, Commonwealth Scientific and Industrial Research Organisation (CSIRO)
  * ABN 41 687 119 230. Licensed under the CSIRO Open Source Software Licence Agreement.
-*/
+ */
 
 package au.csiro.fhir.transforms.parsers;
 
@@ -16,8 +16,8 @@ import java.lang.reflect.Method;
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashMap;
-import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -108,19 +108,19 @@ enum ConceptType {
 	 * SUPPLIER("Supplier", "Supplier", "2061601000001103"), FORM("Form", "Form",
 	 * "105904009");
 	 */
-	
+
 	AMP("Actual Medicinal Product", "Actual Medicinal Product", "AMP"),
 	AMPP("Actual Medicinal Product Pack", "Actual Medicinal Product Pack", "AMPP"),
 	VMP("Virtual Medicinal Product", "Virtual Medicinal Product", "VMP"),
 	VMPP("Virtual Medicinal Product Pack", "Virtual Medicinal Product Pack", "VMPP"),
-	VTM("Virtual Therapeutic Moiety", "Virtual Therapeutic Moiety", "VTM"), 
+	VTM("Virtual Therapeutic Moiety", "Virtual Therapeutic Moiety", "VTM"),
 	INGREDIENT("Ingredient", "Ingredient", "INGREDIENT"),
 	UNITOFMEASURE("	Unit of Measure", "Unit of Measure", "UOM"),
 	ROUTE("Route", "Route", "ROUTE"),
 	SUPPLIER("Supplier", "Supplier", "SUPPLIER"),
 	FORM("Form", "Form", "FORM");
-	
-	
+
+
 	private String name;
 	private String fullName;
 	private String id;
@@ -178,7 +178,7 @@ public class DMDParser {
 	final String baseURL_ValueSet_Lookup = "https://dmd.nhs.uk/vs";
 	final String title_lookup = "dm+d ";
 	final Pattern versionPattern = Pattern.compile("(.*)(nhsbsa)(_)(dmd)(_)([0-9]+\\.[0-9]\\.[0-9])(_)([0-9]+)");
-	
+
 	final String gtinMapID = "ConceptMap-dmd-gtin";
 	final String baseURL_ConceptMap = "https://dmd.nhs.uk/conceptmap/gtin";
 	final String gtinMapTitle = "Dictionary of medicines and devices (dm+d) to GTIN Map";
@@ -186,42 +186,42 @@ public class DMDParser {
 
 
 	// Map by concept type to concept list.
-	Map<ConceptType, List<ConceptDefinitionComponent>> allConcepts = new HashMap<ConceptType, List<ConceptDefinitionComponent>>();
+	Map<ConceptType, List<ConceptDefinitionComponent>> allConcepts = new LinkedHashMap<ConceptType, List<ConceptDefinitionComponent>>();
 	// All concept ID Set
-	Set<String> allConceptsIdSet = new HashSet<String>();
+	Set<String> allConceptsIdSet = new LinkedHashSet<String>();
 	// All property in the CodeSystem
-	Map<String, PropertyComponent> propertyRigister = new HashMap<String, PropertyComponent>();
+	Map<String, PropertyComponent> propertyRigister = new LinkedHashMap<String, PropertyComponent>();
 	// All lookup property, map between data tag name and xml tag name
-	Map<String, LookUpTag> lookUpNameMap = new HashMap<String, LookUpTag>();
-	// look up table which are in a seperated code system 
-	Map<LookUpTag, Map<String, String>> lookupTables_codeSystem = new HashMap<LookUpTag, Map<String, String>>();
-	// look up table which are not in a seperated code system 
-	Map<LookUpTag, Map<String, String>> lookupTables_concepts = new HashMap<LookUpTag, Map<String, String>>();
+	Map<String, LookUpTag> lookUpNameMap = new LinkedHashMap<String, LookUpTag>();
+	// look up table which are in a seperated code system
+	Map<LookUpTag, Map<String, String>> lookupTables_codeSystem = new LinkedHashMap<LookUpTag, Map<String, String>>();
+	// look up table which are not in a seperated code system
+	Map<LookUpTag, Map<String, String>> lookupTables_concepts = new LinkedHashMap<LookUpTag, Map<String, String>>();
 
 	public DMDParser() {
 	}
-	
-	
+
+
 	public ConceptMap processGtinMapping(String gtinFile, String version, String outFolder) throws JAXBException, FileNotFoundException{
 
 		ConceptMap conceptMap = new ConceptMap();
 		logger.info("Process Gtin Concept Map  " + version);
-		Map<String,Set<String>> activeMap = new HashMap<String, Set<String>>();
-		Map<String,Set<String>> retiredMap = new HashMap<String, Set<String>>();
+		Map<String,Set<String>> activeMap = new LinkedHashMap<String, Set<String>>();
+		Map<String,Set<String>> retiredMap = new LinkedHashMap<String, Set<String>>();
 		conceptMap.setId(gtinMapID + "-" + version.replaceAll("\\.", ""));
 		conceptMap.setUrl(baseURL_ConceptMap).setDescription(
-				"A FHIR ConceptMap between the Dictionary of medicines and devices (dm+d) and GTIN (Global Trade Item Number), generated from the dm+d XML distribution")
+						"A FHIR ConceptMap between the Dictionary of medicines and devices (dm+d) and GTIN (Global Trade Item Number), generated from the dm+d XML distribution")
 				.setVersion(version).setTitle(gtinMapTitle).setName(gtinMapTitle).setStatus(PublicationStatus.ACTIVE)
 				.setExperimental(true).setPublisher("NHS UK");
 		ConceptMapGroupComponent groupComponent = new ConceptMapGroupComponent();
 		conceptMap.addGroup(groupComponent);
-		
+
 		groupComponent.setSource(baseURL_CodeSystem);
 		groupComponent.setSourceVersion(version);
 		groupComponent.setTarget(baseURL_CodeSystem_Gtin);
-		
+
 		JAXBContext context = JAXBContext.newInstance(au.csiro.fhir.transforms.xml.dmd.gtin.ObjectFactory.class);
-		
+
 		GTINDETAILS details = (GTINDETAILS) context.createUnmarshaller()
 				.unmarshal(new FileReader(gtinFile));
 		for(AMPPType ampp : details.getAMPPS().getAMPP()) {
@@ -229,32 +229,32 @@ public class DMDParser {
 			// Get ampp ID
 			for(Object o : ampp.getAMPPIDAndGTINDATA()) {
 				if(o instanceof BigInteger) {
-					amppID = o.toString(); 
+					amppID = o.toString();
 				}
 			}
 			if(!activeMap.containsKey(amppID)) {
-				activeMap.put(amppID, new HashSet<String>());
-				retiredMap.put(amppID, new HashSet<String>());
+				activeMap.put(amppID, new LinkedHashSet<String>());
+				retiredMap.put(amppID, new LinkedHashSet<String>());
 			}
 			// Print gtin
 			for(Object o : ampp.getAMPPIDAndGTINDATA()) {
 				if(o instanceof GTINType) {
-					GTINType gt = (GTINType) o; 
+					GTINType gt = (GTINType) o;
 					String gtin= null;
 					String startDt = null;
 					String endDT = null;
 					for(Object gto : gt.getGTINAndSTARTDTAndENDDT()) {
 						JAXBElement<Object> jaxb = (JAXBElement<Object>) gto;
-						
-						if(jaxb.getName().toString().equals("GTIN")) { 
+
+						if(jaxb.getName().toString().equals("GTIN")) {
 							gtin = jaxb.getValue().toString();
 						}
-						else if(jaxb.getName().toString().equals("STARTDT")) { 
+						else if(jaxb.getName().toString().equals("STARTDT")) {
 							startDt = jaxb.getValue().toString();
 						}
-						else if(jaxb.getName().toString().equals("ENDDT")) { 
+						else if(jaxb.getName().toString().equals("ENDDT")) {
 							endDT = jaxb.getValue().toString();
-						}  
+						}
 					}
 					if(endDT == null) {
 						activeMap.get(amppID).add(gtin);
@@ -263,14 +263,14 @@ public class DMDParser {
 						retiredMap.get(amppID).add(gtin);
 					}
 				}
-				
+
 			}
 		}
 		int count = 0;
 		for(String amppid : activeMap.keySet()) {
 			SourceElementComponent sourceElementComponent = new SourceElementComponent();
 			sourceElementComponent.setCode(amppid);
-		
+
 			for(String g : activeMap.get(amppid)) {
 				TargetElementComponent target = new TargetElementComponent();
 				//System.out.println(amppid + "\t" + g + "\t" + "Active");
@@ -283,7 +283,7 @@ public class DMDParser {
 				sourceElementComponent.addTarget(target);
 			}
 			for(String g : retiredMap.get(amppid)) {
-				TargetElementComponent target = new TargetElementComponent();		
+				TargetElementComponent target = new TargetElementComponent();
 				target.setCode(g);
 				target.setEquivalence(ConceptMapEquivalence.RELATEDTO);
 				OtherElementComponent product = new OtherElementComponent();
@@ -294,11 +294,11 @@ public class DMDParser {
 			}
 			groupComponent.addElement(sourceElementComponent);
 			if(count++ > 10) break;
-					
+
 		}
-		
+
 		return conceptMap;
-		
+
 	}
 
 	public CodeSystem processCodeSystem(String dmdFolder, String releaseSerial, String supportFile, String version,
@@ -318,12 +318,12 @@ public class DMDParser {
 		if(lookupTables_codeSystem.size()<1) {
 			loadLookupTables(lookupFile);
 		}
-		
+
 		// Initial CodeSystem
 		CodeSystem codeSystem = new CodeSystem();
 		codeSystem.setId(csID);
 		codeSystem.setUrl(baseURL_CodeSystem).setValueSet(baseURL_ValueSet).setDescription(
-				"A FHIR CodeSystem rendering of the Dictionary of medicines and devices (dm+d) generated from the dm+d XML distribution")
+						"A FHIR CodeSystem rendering of the Dictionary of medicines and devices (dm+d) generated from the dm+d XML distribution")
 				.setVersion(version).setTitle(title).setName(title).setStatus(PublicationStatus.ACTIVE)
 				.setExperimental(true).setContent(CodeSystemContentMode.COMPLETE).setPublisher("NHS UK")
 				.setContent(CodeSystemContentMode.COMPLETE);
@@ -338,7 +338,7 @@ public class DMDParser {
 		registerProperty("LOOKUP", supportFile, propertyRigister);
 
 		logger.info("Property Register " + propertyRigister.size());
-		
+
 		for(String name : propertyRigister.keySet()) {
 			logger.info("Property " + name + " with type " + propertyRigister.get(name).getType().getDisplay());
 		}
@@ -346,7 +346,7 @@ public class DMDParser {
 		// Add all property into CodeSystem
 		for (PropertyComponent pr : propertyRigister.values()) {
 			codeSystem.addProperty(pr);
-			// Add filter 
+			// Add filter
 			CodeSystemFilterComponent codeSystemFilterComponent = new CodeSystemFilterComponent();
 			codeSystemFilterComponent.setCode(pr.getCode());
 			codeSystemFilterComponent.addOperator(FilterOperator.IN);
@@ -356,8 +356,8 @@ public class DMDParser {
 			if(pr.getType().equals(PropertyType.STRING)) {
 				codeSystemFilterComponent.addOperator(FilterOperator.REGEX);
 			}
-			codeSystemFilterComponent.setDescription("Preperty filter for " + pr.getCode());
-			codeSystemFilterComponent.setValue("Preperty filter for " + pr.getCode());
+			codeSystemFilterComponent.setDescription("Property filter for " + pr.getCode());
+			codeSystemFilterComponent.setValue("Property filter for " + pr.getCode());
 			codeSystem.addFilter(codeSystemFilterComponent);
 		}
 
@@ -371,21 +371,21 @@ public class DMDParser {
 		allConcepts.put(ConceptType.FORM, processForm(propertyRigister, allConceptsIdSet, lookupFile));
 		allConcepts.put(ConceptType.SUPPLIER, processSupplier(propertyRigister, allConceptsIdSet, lookupFile));
 		allConcepts.put(ConceptType.ROUTE, processRoute(propertyRigister, allConceptsIdSet, lookupFile));
-		
+
 		addExtraConcepts(codeSystem);
-		
+
 		// NHS feedback 5 - do not display any strength information returned for products with multiple active ingredients
 		mutipleStrengthProcessing();
-		
+
 		//Adding All Concepts
 		for (Map.Entry<ConceptType, List<ConceptDefinitionComponent>> e : allConcepts.entrySet()) {
 			for (ConceptDefinitionComponent cdc : e.getValue()) {
 				codeSystem.addConcept(cdc);
 			}
 		}
-		
+
 		validate(codeSystem);
-		
+
 		return codeSystem;
 	}
 
@@ -393,7 +393,7 @@ public class DMDParser {
 		for (Map.Entry<ConceptType, List<ConceptDefinitionComponent>> e : allConcepts.entrySet()) {
 
 			for (ConceptDefinitionComponent cdc : e.getValue()) {
-				// Counting the IS 
+				// Counting the IS
 				int isCount = 0;
 				for (ConceptPropertyComponent property: cdc.getProperty()) {
 					if(property.getCode().toString().equals("ISID")) {
@@ -408,8 +408,8 @@ public class DMDParser {
 							strengthProperties.add(property);
 						}
 					}
-					cdc.getProperty().removeAll(strengthProperties);	
-				
+					cdc.getProperty().removeAll(strengthProperties);
+
 				}
 			}
 		}
@@ -427,24 +427,24 @@ public class DMDParser {
 			addParentToConceptDefination(typeConcept, "dm+d");
 			codeSystem.addConcept(typeConcept);
 		});
-		
+
 	}
-	
+
 	private ConceptDefinitionComponent createConceptDefinition(String code, String display) {
 		ConceptDefinitionComponent newConcept = new ConceptDefinitionComponent();
 		newConcept.setCode(code);
 		newConcept.setDisplay(display);
 		return newConcept;
 	}
-	
+
 	private void addParentToConceptDefination(ConceptDefinitionComponent concept, String parentCode) {
 		ConceptPropertyComponent addedParentProperty = new ConceptPropertyComponent();
 		addedParentProperty.setCode("parent");
 		addedParentProperty.setValue(new CodeType(parentCode));
 		concept.addProperty(addedParentProperty);
 	}
-	
-	
+
+
 
 
 	public void processCodeSystemWithUpdate(String dmdFolder, String dmdSerial, String supportFile, String outFolder,
@@ -473,12 +473,12 @@ public class DMDParser {
 		}
 
 	}
-	
+
 	public void processGtinMappingmWithUpdate(String dmdFolder, String gtinFile, String outFolder,String txServerUrl, FeedClient feedClient) throws IOException, NoSuchMethodException, SecurityException, IllegalAccessException, IllegalArgumentException, InvocationTargetException, JAXBException {
 
 		String version = processVersionNumber(dmdFolder);
 		ConceptMap cm = processGtinMapping(gtinFile, version, outFolder);
-		
+
 		String outFileName = "ConceptMap-dmd-gtin" + version + ".json";
 		File outFile = new File(outFolder, outFileName);
 		FhirContext ctx = FhirContext.forR4();
@@ -499,7 +499,7 @@ public class DMDParser {
 					new File(outFolder, outFileName));
 		}
 		*/
-		
+
 
 	}
 
@@ -508,11 +508,11 @@ public class DMDParser {
 
 		String version = processVersionNumber(dmdFolder);
 		File lookupFile = new File(dmdFolder, "f_lookup2_" + dmdSerial + ".xml");
-		
+
 		if(lookupTables_codeSystem.size()<1) {
 			loadLookupTables(lookupFile);
 		}
-		
+
 
 		Bundle bundle = new Bundle();
 		bundle.setType(BundleType.COLLECTION);
@@ -525,7 +525,7 @@ public class DMDParser {
 			codeSystem.setId(csID + "-" + tag.replaceAll("_", "-"));
 			String url = baseURL_CodeSystem_Lookup + "/" + tag;
 			codeSystem.setUrl(url).setValueSet(baseURL_ValueSet_Lookup + "/" + tag).setDescription(
-					"A FHIR CodeSystem rendering of the lookup table in Dictionary of medicines and devices (dm+d)")
+							"A FHIR CodeSystem rendering of the lookup table in Dictionary of medicines and devices (dm+d)")
 					.setVersion(version).setTitle(title).setName(title).setStatus(PublicationStatus.ACTIVE)
 					.setExperimental(true).setContent(CodeSystemContentMode.COMPLETE).setPublisher("NHS UK")
 					.setContent(CodeSystemContentMode.COMPLETE);
@@ -567,7 +567,7 @@ public class DMDParser {
 
 	/**
 	 * Load all properties with their type f
-	 * 
+	 *
 	 * @param tabName
 	 * @param dmdContentFile
 	 */
@@ -585,16 +585,16 @@ public class DMDParser {
 						propertyComponent.setCode(name).setDescription(name);
 						if (type.equals("SCTID")) {
 							propertyComponent.setType(PropertyType.CODING);
-						} 
-						
+						}
+
 						else if (type.equals("YYYY-MM-DD")) {
 							propertyComponent.setType(PropertyType.DATETIME);
-						} 
-						
+						}
+
 						else if (type.equalsIgnoreCase("decimal")) {
 							propertyComponent.setType(PropertyType.DECIMAL);
 						}
-						
+
 						else if (type.equalsIgnoreCase("Integer")) {
 							propertyComponent.setType(PropertyType.INTEGER);
 						}
@@ -637,7 +637,7 @@ public class DMDParser {
 	}
 
 	private Map<String, String> extractTable(List<?> l) {
-		Map<String, String> table = new HashMap<String, String>();
+		Map<String, String> table = new LinkedHashMap<String, String>();
 		for (Object o : l) {
 			if (o instanceof InfoType) {
 				table.put(String.valueOf(((InfoType) o).getCD()), ((InfoType) o).getDESC());
@@ -672,7 +672,7 @@ public class DMDParser {
 		lookupTables_codeSystem.put(LookUpTag.DND, extractTable(products.getDND().getINFO()));
 		lookupTables_codeSystem.put(LookUpTag.DT_PAYMENT_CATEGORY, extractTable(products.getDTPAYMENTCATEGORY().getINFO()));
 		lookupTables_codeSystem.put(LookUpTag.FLAVOUR, extractTable(products.getFLAVOUR().getINFO()));
-		
+
 		lookupTables_codeSystem.put(LookUpTag.LEGAL_CATEGORY, extractTable(products.getLEGALCATEGORY().getINFO()));
 		lookupTables_codeSystem.put(LookUpTag.LICENSING_AUTHORITY, extractTable(products.getLICENSINGAUTHORITY().getINFO()));
 		lookupTables_codeSystem.put(LookUpTag.LICENSING_AUTHORITY_CHANGE_REASON,
@@ -681,9 +681,9 @@ public class DMDParser {
 		lookupTables_codeSystem.put(LookUpTag.ONT_FORM_ROUTE, extractTable(products.getONTFORMROUTE().getINFO()));
 		lookupTables_codeSystem.put(LookUpTag.PRICE_BASIS, extractTable(products.getPRICEBASIS().getINFO()));
 		lookupTables_codeSystem.put(LookUpTag.REIMBURSEMENT_STATUS, extractTable(products.getREIMBURSEMENTSTATUS().getINFO()));
-		
+
 		lookupTables_codeSystem.put(LookUpTag.SPEC_CONT, extractTable(products.getSPECCONT().getINFO()));
-		
+
 		lookupTables_codeSystem.put(LookUpTag.VIRTUAL_PRODUCT_PRES_STATUS,
 				extractTable(products.getVIRTUALPRODUCTPRESSTATUS().getINFO()));
 		lookupTables_codeSystem.put(LookUpTag.VIRTUAL_PRODUCT_NON_AVAIL,
@@ -700,9 +700,9 @@ public class DMDParser {
 		JAXBContext context = JAXBContext.newInstance(au.csiro.fhir.transforms.xml.dmd.v2_3.amp.ObjectFactory.class);
 		ACTUALMEDICINALPRODUCTS products = (ACTUALMEDICINALPRODUCTS) context.createUnmarshaller()
 				.unmarshal(new FileReader(xmlFile));
-		Map<String, ConceptDefinitionComponent> conceptRegister = new HashMap<String, ConceptDefinitionComponent>();
+		Map<String, ConceptDefinitionComponent> conceptRegister = new LinkedHashMap<String, ConceptDefinitionComponent>();
 		String keyID = "APID";
-		Set<String> parents = new HashSet<>(Arrays.asList("VPID"));
+		Set<String> parents = new LinkedHashSet<>(Arrays.asList("VPID"));
 		transferComplexType(conceptRegister, propertyRigister, keyID, "DESC", "ABBREVNM", ConceptType.AMP, parents,
 				AmpType.class, products.getAMPS().getAMP());
 		transferComplexType(conceptRegister, propertyRigister, keyID, null, null, null, null, ApiType.class,
@@ -722,9 +722,9 @@ public class DMDParser {
 		JAXBContext context = JAXBContext.newInstance(au.csiro.fhir.transforms.xml.dmd.v2_3.ampp.ObjectFactory.class);
 		ACTUALMEDICINALPRODPACKS products = (ACTUALMEDICINALPRODPACKS) context.createUnmarshaller()
 				.unmarshal(new FileReader(xmlFile));
-		Map<String, ConceptDefinitionComponent> conceptRegister = new HashMap<String, ConceptDefinitionComponent>();
+		Map<String, ConceptDefinitionComponent> conceptRegister = new LinkedHashMap<String, ConceptDefinitionComponent>();
 		String keyID = "APPID";
-		Set<String> parents = new HashSet<>(Arrays.asList("VPPID", "APID"));
+		Set<String> parents = new LinkedHashSet<>(Arrays.asList("VPPID", "APID"));
 		transferComplexType(conceptRegister, propertyRigister, keyID, "NM", "ABBREVNM", ConceptType.AMPP, parents,
 				AmppType.class, products.getAMPPS().getAMPP());
 		transferComplexType(conceptRegister, propertyRigister, keyID, null, null, null, null, PackInfoType.class,
@@ -748,11 +748,11 @@ public class DMDParser {
 			Set<String> conceptIdSet, File xmlFile) throws JAXBException, FileNotFoundException, NoSuchMethodException,
 			SecurityException, IllegalAccessException, IllegalArgumentException, InvocationTargetException {
 
-		Map<String, ConceptDefinitionComponent> conceptRegister = new HashMap<String, ConceptDefinitionComponent>();
+		Map<String, ConceptDefinitionComponent> conceptRegister = new LinkedHashMap<String, ConceptDefinitionComponent>();
 		JAXBContext context = JAXBContext.newInstance(au.csiro.fhir.transforms.xml.dmd.v2_3.vmp.ObjectFactory.class);
 		VIRTUALMEDPRODUCTS vmp = (VIRTUALMEDPRODUCTS) context.createUnmarshaller().unmarshal(new FileReader(xmlFile));
 		String keyID = "VPID";
-		Set<String> parents = new HashSet<>(Arrays.asList("VTMID"));
+		Set<String> parents = new LinkedHashSet<>(Arrays.asList("VTMID"));
 		transferComplexType(conceptRegister, propertyRigister, keyID, "NM", "ABBREVNM", ConceptType.VMP, parents,
 				VmpType.class, vmp.getVMPS().getVMP());
 		transferComplexType(conceptRegister, propertyRigister, keyID, null, null, null, null, VpiType.class,
@@ -778,10 +778,10 @@ public class DMDParser {
 		VIRTUALMEDPRODUCTPACK vmpp = (VIRTUALMEDPRODUCTPACK) context.createUnmarshaller()
 				.unmarshal(new FileReader(xmlFile));
 
-		Map<String, ConceptDefinitionComponent> conceptRegister = new HashMap<String, ConceptDefinitionComponent>();
+		Map<String, ConceptDefinitionComponent> conceptRegister = new LinkedHashMap<String, ConceptDefinitionComponent>();
 		String keyID = "VPPID";
 
-		Set<String> parents = new HashSet<>(Arrays.asList("VPID"));
+		Set<String> parents = new LinkedHashSet<>(Arrays.asList("VPID"));
 		transferComplexType(conceptRegister, propertyRigister, keyID, "NM", "ABBREVNM", ConceptType.VMPP, parents,
 				VmppType.class, vmpp.getVMPPS().getVMPP());
 		transferComplexType(conceptRegister, propertyRigister, keyID, null, null, null, null, DtInfoType.class,
@@ -801,7 +801,7 @@ public class DMDParser {
 		JAXBContext context = JAXBContext.newInstance(au.csiro.fhir.transforms.xml.dmd.v2_3.vtm.ObjectFactory.class);
 		VIRTUALTHERAPEUTICMOIETIES vtm = (VIRTUALTHERAPEUTICMOIETIES) context.createUnmarshaller()
 				.unmarshal(new FileReader(xmlFile));
-		Map<String, ConceptDefinitionComponent> conceptRegister = new HashMap<String, ConceptDefinitionComponent>();
+		Map<String, ConceptDefinitionComponent> conceptRegister = new LinkedHashMap<String, ConceptDefinitionComponent>();
 		String keyID = "VTMID";
 		transferComplexType(conceptRegister, propertyRigister, keyID, "NM", "ABBREVNM", ConceptType.VTM, null,
 				VTM.class, vtm.getVTM());
@@ -819,7 +819,7 @@ public class DMDParser {
 		INGREDIENTSUBSTANCES ing = (INGREDIENTSUBSTANCES) context.createUnmarshaller()
 				.unmarshal(new FileReader(xmlFile));
 
-		Map<String, ConceptDefinitionComponent> conceptRegister = new HashMap<String, ConceptDefinitionComponent>();
+		Map<String, ConceptDefinitionComponent> conceptRegister = new LinkedHashMap<String, ConceptDefinitionComponent>();
 		String keyID = "ISID";
 
 		transferComplexType(conceptRegister, propertyRigister, keyID, "NM", null, ConceptType.INGREDIENT, null,
@@ -828,7 +828,7 @@ public class DMDParser {
 		return new ArrayList<ConceptDefinitionComponent>(conceptRegister.values());
 
 	}
-	
+
 	private List<ConceptDefinitionComponent> processUnitOfMeasure(Map<String, PropertyComponent> propertyRigister,
 			Set<String> conceptIdSet, File xmlFile) throws JAXBException, FileNotFoundException, NoSuchMethodException,
 			SecurityException, IllegalAccessException, IllegalArgumentException, InvocationTargetException {
@@ -836,7 +836,7 @@ public class DMDParser {
 		JAXBContext context = JAXBContext
 				.newInstance(au.csiro.fhir.transforms.xml.dmd.v2_3.lookup.ObjectFactory.class);
 		LOOKUP lookup = (LOOKUP) context.createUnmarshaller().unmarshal(new FileReader(xmlFile));
-		Map<String, ConceptDefinitionComponent> conceptRegister = new HashMap<String, ConceptDefinitionComponent>();
+		Map<String, ConceptDefinitionComponent> conceptRegister = new LinkedHashMap<String, ConceptDefinitionComponent>();
 		String keyID = "CD";
 
 		transferComplexType(conceptRegister, propertyRigister, keyID, "DESC", null, ConceptType.UNITOFMEASURE, null,
@@ -845,7 +845,7 @@ public class DMDParser {
 		return new ArrayList<ConceptDefinitionComponent>(conceptRegister.values());
 
 	}
-	
+
 	private List<ConceptDefinitionComponent> processForm(Map<String, PropertyComponent> propertyRigister,
 			Set<String> conceptIdSet, File xmlFile) throws JAXBException, FileNotFoundException, NoSuchMethodException,
 			SecurityException, IllegalAccessException, IllegalArgumentException, InvocationTargetException {
@@ -853,14 +853,14 @@ public class DMDParser {
 		JAXBContext context = JAXBContext
 				.newInstance(au.csiro.fhir.transforms.xml.dmd.v2_3.lookup.ObjectFactory.class);
 		LOOKUP lookup = (LOOKUP) context.createUnmarshaller().unmarshal(new FileReader(xmlFile));
-		Map<String, ConceptDefinitionComponent> conceptRegister = new HashMap<String, ConceptDefinitionComponent>();
+		Map<String, ConceptDefinitionComponent> conceptRegister = new LinkedHashMap<String, ConceptDefinitionComponent>();
 		String keyID = "CD";
 		transferComplexType(conceptRegister, propertyRigister, keyID, "DESC", null, ConceptType.FORM, null,
 				HistoryInfoType.class, lookup.getFORM().getINFO());
 		conceptIDDuplicationCheck(conceptIdSet, conceptRegister, keyID);
 		return new ArrayList<ConceptDefinitionComponent>(conceptRegister.values());
 	}
-	
+
 	private List<ConceptDefinitionComponent> processSupplier(Map<String, PropertyComponent> propertyRigister,
 			Set<String> conceptIdSet, File xmlFile) throws JAXBException, FileNotFoundException, NoSuchMethodException,
 			SecurityException, IllegalAccessException, IllegalArgumentException, InvocationTargetException {
@@ -868,14 +868,14 @@ public class DMDParser {
 		JAXBContext context = JAXBContext
 				.newInstance(au.csiro.fhir.transforms.xml.dmd.v2_3.lookup.ObjectFactory.class);
 		LOOKUP lookup = (LOOKUP) context.createUnmarshaller().unmarshal(new FileReader(xmlFile));
-		Map<String, ConceptDefinitionComponent> conceptRegister = new HashMap<String, ConceptDefinitionComponent>();
+		Map<String, ConceptDefinitionComponent> conceptRegister = new LinkedHashMap<String, ConceptDefinitionComponent>();
 		String keyID = "CD";
 		transferComplexType(conceptRegister, propertyRigister, keyID, "DESC", null, ConceptType.SUPPLIER, null,
 				SupplierInfoType.class, lookup.getSUPPLIER().getINFO());
 		conceptIDDuplicationCheck(conceptIdSet, conceptRegister, keyID);
 		return new ArrayList<ConceptDefinitionComponent>(conceptRegister.values());
 	}
-	
+
 	private List<ConceptDefinitionComponent> processRoute(Map<String, PropertyComponent> propertyRigister,
 			Set<String> conceptIdSet, File xmlFile) throws JAXBException, FileNotFoundException, NoSuchMethodException,
 			SecurityException, IllegalAccessException, IllegalArgumentException, InvocationTargetException {
@@ -883,7 +883,7 @@ public class DMDParser {
 		JAXBContext context = JAXBContext
 				.newInstance(au.csiro.fhir.transforms.xml.dmd.v2_3.lookup.ObjectFactory.class);
 		LOOKUP lookup = (LOOKUP) context.createUnmarshaller().unmarshal(new FileReader(xmlFile));
-		Map<String, ConceptDefinitionComponent> conceptRegister = new HashMap<String, ConceptDefinitionComponent>();
+		Map<String, ConceptDefinitionComponent> conceptRegister = new LinkedHashMap<String, ConceptDefinitionComponent>();
 		String keyID = "CD";
 		transferComplexType(conceptRegister, propertyRigister, keyID, "DESC", null, ConceptType.ROUTE, null,
 				HistoryInfoType.class, lookup.getROUTE().getINFO());
@@ -897,8 +897,8 @@ public class DMDParser {
 			throws NoSuchMethodException, SecurityException, IllegalAccessException, IllegalArgumentException,
 			InvocationTargetException {
 
-		Map<String, Class<?>> fields = new HashMap<String, Class<?>>();
-		Map<String, String> fieldNameMap = new HashMap<String, String>();
+		Map<String, Class<?>> fields = new LinkedHashMap<String, Class<?>>();
+		Map<String, String> fieldNameMap = new LinkedHashMap<String, String>();
 		// Property Register
 		for (Field field : clazz.getDeclaredFields()) {
 			XmlElement element = (XmlElement) field.getAnnotations()[0];
@@ -978,7 +978,7 @@ public class DMDParser {
 							conceptPropertyComponent.setValue(coding);
 						}
 
-					} 
+					}
 					else if (propertyComponent.getType() == PropertyType.DATETIME) {
 						conceptPropertyComponent.setValue(new DateTimeType(v.toString()));
 					}
@@ -1002,10 +1002,10 @@ public class DMDParser {
 								conceptPropertyComponent.setValue(new DecimalType(v.toString()));
 							}
 						}
-						
+
 
 					}
-					
+
 					else if (propertyComponent.getType() == PropertyType.INTEGER) {
 						conceptPropertyComponent.setValue(new IntegerType(v.toString()));
 					}
@@ -1013,7 +1013,7 @@ public class DMDParser {
 					else {
 						conceptPropertyComponent.setValue(new StringType(v.toString()));
 					}
-					
+
 					conceptRegister.get(id).addProperty(conceptPropertyComponent);
 
 				}
@@ -1021,23 +1021,23 @@ public class DMDParser {
 		}
 
 	}
-	
+
 	private void transferComplexTypeForONTFORMROUTE(Map<String, ConceptDefinitionComponent> conceptRegister,
 			Map<String, PropertyComponent> propertyRigister, String idField, String displayField, String synobymField,
 			ConceptType nativeParent, Set<String> parentField, Class<?> clazz, List<?> oList)
 			throws NoSuchMethodException, SecurityException, IllegalAccessException, IllegalArgumentException,
 			InvocationTargetException {
 
-		Map<String, Class<?>> fields = new HashMap<String, Class<?>>();
-		Map<String, String> fieldNameMap = new HashMap<String, String>();
+		Map<String, Class<?>> fields = new LinkedHashMap<String, Class<?>>();
+		Map<String, String> fieldNameMap = new LinkedHashMap<String, String>();
 		// Property Register
 		for (Field field : clazz.getDeclaredFields()) {
 			XmlElement element = (XmlElement) field.getAnnotations()[0];
 			String elementName = element.name();
 			System.out
 					.println(clazz.getName() + "\t" + field.getName() + "\t" + element.name() + "\t" + field.getType());
-				fields.put(field.getName().toUpperCase(), field.getType());
-				fieldNameMap.put(field.getName().toUpperCase(), elementName);
+			fields.put(field.getName().toUpperCase(), field.getType());
+			fieldNameMap.put(field.getName().toUpperCase(), elementName);
 		}
 		// Concept Add
 		for (Object o : oList) {
@@ -1074,7 +1074,7 @@ public class DMDParser {
 
 	private void conceptIDDuplicationCheck(Set<String> conceptIdSet, Map<String, ConceptDefinitionComponent> conceptRegister,
 			String keyID) {
-		Set<String> remove = new HashSet<String>();
+		Set<String> remove = new LinkedHashSet<String>();
 		for (String cid : conceptRegister.keySet()) {
 			if (conceptIdSet.contains(cid)) {
 				logger.info("Check ID " + keyID + "\t" + cid);
@@ -1088,10 +1088,10 @@ public class DMDParser {
 			logger.info("register remove " + s + "\t" + conceptRegister.size());
 		}
 	}
-	
+
 	private void validate(CodeSystem codeSystem) {
 		logger.info("Validate Code System, size is " + codeSystem.getConcept().size());
-		Set<String> propertyNames = new HashSet<String>();
+		Set<String> propertyNames = new LinkedHashSet<String>();
 		for(PropertyComponent p : codeSystem.getProperty()) {
 			propertyNames.add(p.getCode());
 		}
@@ -1106,12 +1106,12 @@ public class DMDParser {
 					if(!lookupName.equals(baseURL_CodeSystem)&&LookUpTag.findByName(lookupName)==null) {
 						logger.severe("Validate Error CodeSystem Reference: " + lookupName + "\t" + c.getCode());
 					}
-					
+
 				}
 			}
 		}
 	}
-	
+
 	private InputStream getFileFromResourceAsStream(String fileName) {
 
 		// The class loader that loaded the class
