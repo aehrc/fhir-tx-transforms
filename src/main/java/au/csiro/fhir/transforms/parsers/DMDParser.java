@@ -175,7 +175,6 @@ public class DMDParser {
 	final String csID = "CodeSystem-dmd";
 	final String title = "Dictionary of medicines and devices (dm+d)";
 	final String baseURL_CodeSystem_Lookup = "https://dmd.nhs.uk";
-	final String baseURL_ValueSet_Lookup = "https://dmd.nhs.uk/vs";
 	final String title_lookup = "dm+d ";
 	final Pattern versionPattern = Pattern.compile("(.*)(nhsbsa)(_)(dmd)(_)([0-9]+\\.[0-9]\\.[0-9])(_)([0-9]+)");
 	
@@ -321,7 +320,7 @@ public class DMDParser {
 		
 		// Initial CodeSystem
 		CodeSystem codeSystem = new CodeSystem();
-		codeSystem.setId(csID);
+		codeSystem.setId(csID + "-" + version);
 		codeSystem.setUrl(baseURL_CodeSystem).setValueSet(baseURL_ValueSet).setDescription(
 				"A FHIR CodeSystem rendering of the Dictionary of medicines and devices (dm+d) generated from the dm+d XML distribution")
 				.setVersion(version).setTitle(title).setName(title).setStatus(PublicationStatus.ACTIVE)
@@ -516,15 +515,15 @@ public class DMDParser {
 
 		Bundle bundle = new Bundle();
 		bundle.setType(BundleType.COLLECTION);
-		bundle.setId("Bundle-dmd-CodeSystems");
+		bundle.setId("Bundle-dmd-CodeSystems-"+version);
 		FhirContext ctx = FhirContext.forR4();
 		for (Map.Entry<LookUpTag, Map<String, String>> e : lookupTables_codeSystem.entrySet()) {
 			CodeSystem codeSystem = new CodeSystem();
 			String tag = e.getKey().toString();
 			String title = title_lookup + tag;
-			codeSystem.setId(csID + "-" + tag.replaceAll("_", "-"));
+			codeSystem.setId(csID + "-" + tag.replaceAll("_", "-") + "-" + version);
 			String url = baseURL_CodeSystem_Lookup + "/" + tag;
-			codeSystem.setUrl(url).setValueSet(baseURL_ValueSet_Lookup + "/" + tag).setDescription(
+			codeSystem.setUrl(url).setValueSet(url + "/vs").setDescription(
 					"A FHIR CodeSystem rendering of the lookup table in Dictionary of medicines and devices (dm+d)")
 					.setVersion(version).setTitle(title).setName(title).setStatus(PublicationStatus.ACTIVE)
 					.setExperimental(true).setContent(CodeSystemContentMode.COMPLETE).setPublisher("NHS UK")
@@ -543,7 +542,7 @@ public class DMDParser {
 			bundle.addEntry(bundleEntry);
 
 			String con = ctx.newJsonParser().setPrettyPrint(true).encodeResourceToString(codeSystem);
-			String fileName = "dmd-" + tag.toLowerCase() + ".json";
+			String fileName = "dmd-" + tag.toLowerCase() + "-" + version + ".json";
 			Utility.toTextFile(con, outFolder + File.separator + fileName);
 
 			if (txServerUrl != null) {
@@ -554,7 +553,7 @@ public class DMDParser {
 		}
 
 		String con = ctx.newJsonParser().setPrettyPrint(true).encodeResourceToString(bundle);
-		String fileName = "Bundle_dmd_CodeSystems.json";
+		String fileName = "Bundle_dmd_CodeSystems-" + version + ".json";
 		Utility.toTextFile(con, outFolder + File.separator + fileName);
 
 		if (feedClient != null) {
