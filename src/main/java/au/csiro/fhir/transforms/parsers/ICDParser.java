@@ -236,7 +236,7 @@ public class ICDParser {
 		dt.setValueAsString(version.equals("5.0")?"2016-04-01":(version.equals("4.0")?"2012-04-01":null));
 
 		codeSystem.setUrl("http://hl7.org/fhir/sid/icd-10-uk")
-				.setValueSet("http://hl7.org/fhir/sid/icd-10-uk/vs" + "|" + version)
+				.setValueSet("http://hl7.org/fhir/sid/icd-10-uk/vs")
 				.setDateElement(dt)
 				.setName("ICD_10_UK")
 				.setVersion(version)
