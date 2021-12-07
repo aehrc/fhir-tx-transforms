@@ -16,6 +16,7 @@ import java.lang.reflect.Method;
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -31,6 +32,7 @@ import javax.xml.bind.JAXBElement;
 import javax.xml.bind.JAXBException;
 import javax.xml.bind.annotation.XmlElement;
 
+import org.hl7.fhir.r4.model.BooleanType;
 import org.hl7.fhir.r4.model.Bundle;
 import org.hl7.fhir.r4.model.Bundle.BundleEntryComponent;
 import org.hl7.fhir.r4.model.Bundle.BundleType;
@@ -183,6 +185,20 @@ public class DMDParser {
 	final String gtinMapTitle = "Dictionary of medicines and devices (dm+d) to GTIN Map";
 	final String baseURL_CodeSystem_Gtin = "https://www.gs1.org/gtin";
 
+	final List<String> groupedProps = Arrays.asList(
+			// VpiType: Ingredient Strength
+			"ISID",
+			"STRNT_NMRTR_UOMCD",
+			"STRNT_NMRTR_VAL",
+			"STRNT_NMRTR_VAL",
+			"STRNT_DNMTR_UOMCD",
+			"STRNT_DNMTR_VAL",
+			"BASIS_STRNTCD",
+			"BS_SUBID",
+			// ApiType: Ingredient Strength
+			"STRNTH",
+			"UOMCD"
+			);
 
 	// Map by concept type to concept list.
 	Map<ConceptType, List<ConceptDefinitionComponent>> allConcepts = new LinkedHashMap<ConceptType, List<ConceptDefinitionComponent>>();
@@ -373,9 +389,6 @@ public class DMDParser {
 
 		addExtraConcepts(codeSystem);
 
-		// NHS feedback 5 - do not display any strength information returned for products with multiple active ingredients
-		mutipleStrengthProcessing();
-
 		//Adding All Concepts
 		for (Map.Entry<ConceptType, List<ConceptDefinitionComponent>> e : allConcepts.entrySet()) {
 			for (ConceptDefinitionComponent cdc : e.getValue()) {
@@ -386,32 +399,6 @@ public class DMDParser {
 		validate(codeSystem);
 
 		return codeSystem;
-	}
-
-	private void mutipleStrengthProcessing() {
-		for (Map.Entry<ConceptType, List<ConceptDefinitionComponent>> e : allConcepts.entrySet()) {
-
-			for (ConceptDefinitionComponent cdc : e.getValue()) {
-				// Counting the IS
-				int isCount = 0;
-				for (ConceptPropertyComponent property: cdc.getProperty()) {
-					if(property.getCode().toString().equals("ISID")) {
-						isCount ++;
-					}
-				}
-				if (isCount > 1) {
-					// Remove all Property with "STRNT"
-					List<ConceptPropertyComponent> strengthProperties = new ArrayList<ConceptPropertyComponent>();
-					for (ConceptPropertyComponent property: cdc.getProperty()) {
-						if(property.getCode().toString().contains("STRNT")) {
-							strengthProperties.add(property);
-						}
-					}
-					cdc.getProperty().removeAll(strengthProperties);
-
-				}
-			}
-		}
 	}
 
 	private void addExtraConcepts(CodeSystem codeSystem) {
@@ -613,6 +600,9 @@ public class DMDParser {
 
 								}
 							}
+						}
+						if (groupedProps.contains(name)) {
+							propertyComponent.addExtension("http://csiro.au/CodeSystem/subproperty", new BooleanType(true));
 						}
 						propertyRigister.put(name, propertyComponent);
 					}
@@ -896,6 +886,9 @@ public class DMDParser {
 			throws NoSuchMethodException, SecurityException, IllegalAccessException, IllegalArgumentException,
 			InvocationTargetException {
 
+		final boolean group = VpiType.class.equals(clazz) || ApiType.class.equals(clazz);
+		final Map<String,Integer> groupKeys = new HashMap<>();
+		
 		Map<String, Class<?>> fields = new LinkedHashMap<String, Class<?>>();
 		Map<String, String> fieldNameMap = new LinkedHashMap<String, String>();
 		// Property Register
@@ -923,6 +916,12 @@ public class DMDParser {
 				nativeParentProperty.setCode("parent");
 				nativeParentProperty.setValue(new CodeType(nativeParent.getId()));
 				conceptRegister.get(id).addProperty(nativeParentProperty);
+			}
+			// Handle grouping
+			int groupKey = -1;
+			if (group) {
+				groupKey = groupKeys.getOrDefault(id, 1);
+				groupKeys.put(id, groupKey + 1);
 			}
 			for (Map.Entry<String, Class<?>> entry : fields.entrySet()) {
 				String fieldName = entry.getKey();
@@ -952,6 +951,11 @@ public class DMDParser {
 					ConceptPropertyComponent conceptPropertyComponent = new ConceptPropertyComponent();
 					PropertyComponent propertyComponent = propertyRigister.get(propertyName);
 					conceptPropertyComponent.setCode(propertyName);
+					if (group && groupedProps.contains(propertyName)) {
+						conceptPropertyComponent.addExtension(
+								"http://csiro.au/CodeSystem/subproperty-key",
+								new StringType(String.valueOf(groupKey)));
+					}
 					if (propertyComponent.getType() == PropertyType.CODING) {
 						if (lookUpNameMap.containsKey(propertyName)) {
 							Map<String, String> valueMap = lookupTables_codeSystem.get(lookUpNameMap.get(propertyName));
@@ -986,7 +990,7 @@ public class DMDParser {
 						// in the xsd   <xs:element name="STRNT_NMRTR_VAL"   type="xs:float"    minOccurs="0"  maxOccurs="1" />
 						// So the v should always be float number
 						if (!(v instanceof Float)) {
-							System.out.println("check data for float value");
+							logger.warning("Check data for float value. Skipping the value: " + v);
 						}
 						else {
 							float vf = ((Float) v).floatValue();
