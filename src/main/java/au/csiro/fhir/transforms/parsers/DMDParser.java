@@ -602,7 +602,7 @@ public class DMDParser {
 							}
 						}
 						if (groupedProps.contains(name)) {
-							propertyComponent.addExtension("http://csiro.au/CodeSystem/subproperty", new BooleanType(true));
+							propertyComponent.addExtension("http://csiro.au/StructureDefinition/subproperty", new BooleanType(true));
 						}
 						propertyRigister.put(name, propertyComponent);
 					}
@@ -953,7 +953,7 @@ public class DMDParser {
 					conceptPropertyComponent.setCode(propertyName);
 					if (group && groupedProps.contains(propertyName)) {
 						conceptPropertyComponent.addExtension(
-								"http://csiro.au/CodeSystem/subproperty-key",
+								"http://csiro.au/StructureDefinition/subproperty-key",
 								new StringType(String.valueOf(groupKey)));
 					}
 					if (propertyComponent.getType() == PropertyType.CODING) {
