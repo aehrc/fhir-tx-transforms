@@ -211,7 +211,7 @@ public class DMDParser {
 		conceptMap.setUrl(baseURL_ConceptMap).setDescription(
 						"A FHIR ConceptMap between the Dictionary of medicines and devices (dm+d) and GTIN (Global Trade Item Number), generated from the dm+d XML distribution")
 				.setVersion(version).setTitle(gtinMapTitle).setName(gtinMapTitle).setStatus(PublicationStatus.ACTIVE)
-				.setExperimental(true).setPublisher("NHS UK");
+				.setExperimental(false).setPublisher("NHS UK");
 		ConceptMapGroupComponent groupComponent = new ConceptMapGroupComponent();
 		conceptMap.addGroup(groupComponent);
 
@@ -324,7 +324,7 @@ public class DMDParser {
 		codeSystem.setUrl(baseURL_CodeSystem).setValueSet(baseURL_ValueSet).setDescription(
 						"A FHIR CodeSystem rendering of the Dictionary of medicines and devices (dm+d) generated from the dm+d XML distribution")
 				.setVersion(version).setTitle(title).setName(title).setStatus(PublicationStatus.ACTIVE)
-				.setExperimental(true).setContent(CodeSystemContentMode.COMPLETE).setPublisher("NHS UK")
+				.setExperimental(false).setContent(CodeSystemContentMode.COMPLETE).setPublisher("NHS UK")
 				.setContent(CodeSystemContentMode.COMPLETE);
 		codeSystem.setConcept(new ArrayList<CodeSystem.ConceptDefinitionComponent>());
 
@@ -526,7 +526,7 @@ public class DMDParser {
 			codeSystem.setUrl(url).setValueSet(url + "/vs").setDescription(
 							"A FHIR CodeSystem rendering of the lookup table in Dictionary of medicines and devices (dm+d)")
 					.setVersion(version).setTitle(title).setName(title).setStatus(PublicationStatus.ACTIVE)
-					.setExperimental(true).setContent(CodeSystemContentMode.COMPLETE).setPublisher("NHS UK")
+					.setExperimental(false).setContent(CodeSystemContentMode.COMPLETE).setPublisher("NHS UK")
 					.setContent(CodeSystemContentMode.COMPLETE);
 			codeSystem.setConcept(new ArrayList<CodeSystem.ConceptDefinitionComponent>());
 			for (Map.Entry<String, String> en : e.getValue().entrySet()) {
