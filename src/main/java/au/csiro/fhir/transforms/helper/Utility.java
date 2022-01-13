@@ -5,19 +5,32 @@
 
 package au.csiro.fhir.transforms.helper;
 
-import org.apache.commons.io.FileUtils;
-import org.apache.poi.ss.usermodel.Row;
-import org.apache.poi.xssf.usermodel.XSSFSheet;
-import org.apache.poi.xssf.usermodel.XSSFWorkbook;
-
-import java.io.*;
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 
+import org.apache.commons.io.FileUtils;
+import org.apache.poi.ss.usermodel.Row;
+import org.apache.poi.xssf.usermodel.XSSFSheet;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import org.hl7.fhir.r4.model.Resource;
+
+import ca.uhn.fhir.context.FhirContext;
+
 public class Utility {
+	
+	protected static FhirContext ctx = FhirContext.forR4();
 
 	public static List<String> readTxtFile(String fileName, boolean heading) throws IOException {
 		File file = new File(fileName);
@@ -177,6 +190,12 @@ public class Utility {
 	public static String jsonFileNameToEntry(String name) {
 
 		return name.replaceAll(".json", "_Entry.json");
+
+	}
+	
+	public static void printResource(Resource r) {
+
+		System.out.println(ctx.newJsonParser().setPrettyPrint(true).encodeResourceToString(r));
 
 	}
 

@@ -34,9 +34,6 @@ import au.csiro.fhir.transforms.helper.FeedClient;
 import au.csiro.fhir.transforms.helper.FeedUtility;
 import au.csiro.fhir.transforms.helper.Utility;
 import au.csiro.fhir.transforms.helper.atomio.Entry;
-
-import org.hl7.fhir.r4.model.StringType;
-
 import ca.uhn.fhir.context.FhirContext;
 
 public class CTV3Parser {
@@ -225,7 +222,7 @@ public class CTV3Parser {
 				.setContent(CodeSystemContentMode.COMPLETE);
 
 		codeSystem.addProperty(new PropertyComponent().setCode("status").setDescription("Concept Status")
-				.setType(PropertyType.STRING));
+				.setType(PropertyType.CODE));
 
 		codeSystem.addProperty(new PropertyComponent().setCode("domain").setDescription("Concept Domain")
 				.setType(PropertyType.CODE));
@@ -255,7 +252,7 @@ public class CTV3Parser {
 		ConceptDefinitionComponent concept = new ConceptDefinitionComponent();
 		concept.setCode(code.id);
 		ConceptPropertyComponent property_status = new ConceptPropertyComponent(new CodeType("status"),
-				new StringType(code.status));
+				new CodeType(code.status));
 		concept.addProperty(property_status);
 		ConceptPropertyComponent property_domain = new ConceptPropertyComponent(new CodeType("domain"),
 				new CodeType(code.domain.id));

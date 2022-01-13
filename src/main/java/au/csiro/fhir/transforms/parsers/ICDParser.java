@@ -8,10 +8,8 @@ package au.csiro.fhir.transforms.parsers;
 import java.io.File;
 import java.io.IOException;
 import java.text.ParseException;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -27,18 +25,14 @@ import org.hl7.fhir.r4.model.CodeSystem.PropertyType;
 import org.hl7.fhir.r4.model.CodeType;
 import org.hl7.fhir.r4.model.DateTimeType;
 import org.hl7.fhir.r4.model.Enumerations.PublicationStatus;
+import org.hl7.fhir.r4.model.StringType;
 
 import au.csiro.fhir.transforms.helper.FHIRClientR4;
 import au.csiro.fhir.transforms.helper.FeedClient;
 import au.csiro.fhir.transforms.helper.FeedUtility;
 import au.csiro.fhir.transforms.helper.Utility;
 import au.csiro.fhir.transforms.helper.atomio.Entry;
-
-import org.hl7.fhir.r4.model.StringType;
-import org.hl7.fhir.utilities.DateTimeUtil;
-
 import ca.uhn.fhir.context.FhirContext;
-import ca.uhn.fhir.model.primitive.DateTimeDt;
 import edu.emory.mathcs.backport.java.util.Arrays;
 
 public class ICDParser {

@@ -33,15 +33,13 @@ import org.hl7.fhir.r4.model.ConceptMap.TargetElementComponent;
 import org.hl7.fhir.r4.model.Enumerations.ConceptMapEquivalence;
 import org.hl7.fhir.r4.model.Enumerations.PublicationStatus;
 import org.hl7.fhir.r4.model.StringType;
+import org.hl7.fhir.r4.model.UrlType;
 
 import au.csiro.fhir.transforms.helper.FHIRClientR4;
 import au.csiro.fhir.transforms.helper.FeedClient;
 import au.csiro.fhir.transforms.helper.FeedUtility;
 import au.csiro.fhir.transforms.helper.Utility;
 import au.csiro.fhir.transforms.helper.atomio.Entry;
-
-import org.hl7.fhir.r4.model.UrlType;
-
 import ca.uhn.fhir.context.FhirContext;
 
 public class NICIPParser {
