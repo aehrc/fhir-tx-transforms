@@ -696,12 +696,6 @@ public class DMDParser {
 		}
 	}
 
-	/**
-	 * Load all properties with their type f
-	 *
-	 * @param tabName
-	 * @param dmdContentFile
-	 */
 	private void registerProperty(String tabName, String supportFile, Map<String, PropertyComponent> propertyRigister) {
 		InputStream supportFileInputStream = getFileFromResourceAsStream(supportFile);
 		logger.info("Register property for " + tabName);
@@ -754,10 +748,7 @@ public class DMDParser {
 
 	}
 	
-	/**
-	 * Process extention properties, they are
-	 * @param propertyRigister
-	 */
+	
 	private void processExtentionProperty( Map<String, PropertyComponent> propertyRigister) {
 		
 		for(String s : extensionPropertyNames) {
