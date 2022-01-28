@@ -41,10 +41,10 @@ public class FHIRClientR4 {
 
 	public FHIRClientR4(String end) {
 		ctx = FhirContext.forR4();
-		client = ctx.newRestfulGenericClient(end);
 		ctx.getRestfulClientFactory().setConnectTimeout(20 * 1000);
 		ctx.getRestfulClientFactory().setSocketTimeout(800 * 1000);
-
+		client = ctx.newRestfulGenericClient(end);
+		
 	}
 
 	/**
