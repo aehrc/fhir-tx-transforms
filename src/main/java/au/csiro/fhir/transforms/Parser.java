@@ -3,8 +3,8 @@
  * ABN 41 687 119 230. Licensed under the CSIRO Open Source Software Licence Agreement.
  */
 
-package au.csiro.fhir.transforms;
-
+		package au.csiro.fhir.transforms;
+		
 import java.io.IOException;
 import java.io.StringReader;
 import java.lang.reflect.InvocationTargetException;
@@ -33,13 +33,13 @@ import au.csiro.fhir.transforms.parsers.OPCSParser;
 
 public class Parser {
 
-	// private final String properties_file_name = "config.properties";
-
+		// private final String properties_file_name = "config.properties";
+		
 	Properties props = new Properties();
 	String outFolder = null;
 	String txServer = null;
 	FeedClient feedClient= null;
-	
+
 	String feedServer = null;
 	String feedClientId = null;
 	String feedClientSecret = null;
@@ -59,7 +59,7 @@ public class Parser {
 		txServer = props.getProperty("tx.server.url");
 		if (txServer != null) {
 			System.out.printf("FHIR terminology server URL is %s \n", txServer);
-		}	
+		}
 		feedServer = props.getProperty("feed.server.name");
 		feedClientId = props.getProperty("feed.server.client.id");
 		feedClientSecret= props.getProperty("feed.server.client.secret");
@@ -73,7 +73,7 @@ public class Parser {
 	}
 
 	private void parseCTV2() throws IOException, ParseException {
-		String termFile = props.getProperty("ctv2.termFile");	
+		String termFile = props.getProperty("ctv2.termFile");
 		CTV2Parser parser = new CTV2Parser();
 		String domain = "";
 		if(termFile.contains("UNIFIED")) {
@@ -84,7 +84,7 @@ public class Parser {
 		}
 		parser.processCodeSystemWithUpdate( termFile, "20160401", outFolder, txServer, feedClient,  domain);
 	}
-	
+
 	private void parseCTV3() throws IOException, ParseException {
 		CTV3Parser parser = new CTV3Parser();
 		Set<String> versions = new HashSet<String>();
@@ -97,7 +97,7 @@ public class Parser {
 			String folder = props.getProperty("ctv3.version." + v + ".folder");
 			parserSingleVersionCTV3(folder,historyFile, v, parser);
 		}
-	
+
 	}
 
 	private void parseNICIP() throws IOException {
@@ -109,8 +109,8 @@ public class Parser {
 	}
 
 	private void parseICD() throws IOException, ParseException {
-		ICDParser parser = new ICDParser();
 		for (String s : getPropertiesWithStartString("icd10uk.version")) {
+			ICDParser parser = new ICDParser();
 			String version = s.split("\\.")[2];
 			version = version.replaceAll("/", ".");
 			String codeFile = props.getProperty(s);
@@ -168,13 +168,13 @@ public class Parser {
 			parser.processResourceWithUpdate(packageFolder, version, outFolder, txServer,feedClient);
 		}
 	}
-	
+
 	private void parseDMD() throws IOException, ParseException, JAXBException, NoSuchMethodException, SecurityException, IllegalAccessException, IllegalArgumentException, InvocationTargetException {
-		String dmdFolder = props.getProperty("dmd.releaseFolder");	
-		String dmdSerial = props.getProperty("dmd.releaseSerial");	
-		String supportFile =  "dm+d Content For Terminology Server.xlsx";	
+		String dmdFolder = props.getProperty("dmd.releaseFolder");
+		String dmdSerial = props.getProperty("dmd.releaseSerial");
+		String supportFile =  "dm+d Content For Terminology Server.xlsx";
 		String gtinFile =  props.getProperty("dmd.gtinFile");
-;		DMDParser parser = new DMDParser();
+		;		DMDParser parser = new DMDParser();
 		parser.processSupportCodeSystemWithUpdate(dmdFolder, dmdSerial, outFolder, txServer, feedClient);
 		parser.processCodeSystemWithUpdate( dmdFolder,dmdSerial ,supportFile,outFolder, txServer, feedClient);
 		parser.processGtinMappingmWithUpdate(dmdFolder,gtinFile,outFolder, txServer, feedClient);
