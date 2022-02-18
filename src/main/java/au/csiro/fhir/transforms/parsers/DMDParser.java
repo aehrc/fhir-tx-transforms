@@ -311,7 +311,7 @@ public class DMDParser {
 					DateTimeType date = new DateTimeType();
 					date.setValueAsString(row.startDt);
 					product.addExtension(
-							"http://hl7.org/fhir/5.0/StructureDefinition/extension-ConceptMap.group.element.target.dependsOn.valueDateTime",
+							"http://hl7.org/fhir/5.0/StructureDefinition/extension-ConceptMap.group.element.target.dependsOn.value",
 							date);
 					product.setProperty("start");
 					product.setValue(row.startDt);
@@ -323,7 +323,7 @@ public class DMDParser {
 					DateTimeType date = new DateTimeType();
 					date.setValueAsString(row.endDt);
 					product.addExtension(
-							"http://hl7.org/fhir/5.0/StructureDefinition/extension-ConceptMap.group.element.target.dependsOn.valueDateTime",
+							"http://hl7.org/fhir/5.0/StructureDefinition/extension-ConceptMap.group.element.target.dependsOn.value",
 							date);
 					product.setProperty("end");
 					product.setValue(row.endDt);
