@@ -68,6 +68,7 @@ import au.csiro.fhir.transforms.xml.dmd.gtin.AMPPType;
 import au.csiro.fhir.transforms.xml.dmd.gtin.GTINDETAILS;
 import au.csiro.fhir.transforms.xml.dmd.gtin.GTINType;
 import au.csiro.fhir.transforms.xml.dmd.v2_3.amp.ACTUALMEDICINALPRODUCTS;
+import au.csiro.fhir.transforms.xml.dmd.v2_3.amp.ACTUALMEDICINALPRODUCTS.APINGREDIENT;
 import au.csiro.fhir.transforms.xml.dmd.v2_3.amp.AmpType;
 import au.csiro.fhir.transforms.xml.dmd.v2_3.amp.ApiType;
 import au.csiro.fhir.transforms.xml.dmd.v2_3.amp.AppProdInfoType;
@@ -161,7 +162,7 @@ enum LookUpTag {
 }
 
 enum ExtensionProperty {
-	ISID, BASIS_STRNTCD, BS_SUBID, STRNT_NMRTR_VAL, STRNT_NMRTR_UOMCD, STRNT_DNMTR_VAL, STRNT_DNMTR_UOMCD;
+	ISID, BASIS_STRNTCD, BS_SUBID, STRNT_NMRTR_VAL, STRNT_NMRTR_UOMCD, STRNT_DNMTR_VAL, STRNT_DNMTR_UOMCD,STRNTH,UOMCD;
 
 	public static ExtensionProperty findByName(String n) {
 		for (ExtensionProperty v : values()) {
@@ -219,6 +220,8 @@ public class DMDParser {
 	Set<String> extensionPropertyNames = new HashSet<String>();
 	// Multiple Ingredient VMPs
 	Map<String, List<Map<String, String>>> multipleVmps = new HashMap<String, List<Map<String, String>>>();
+	// Multiple Ingredient AMPs
+	Map<String, List<Map<String, String>>> multipleAmps = new HashMap<String, List<Map<String, String>>>();
 
 	public DMDParser() {
 	}
@@ -426,15 +429,19 @@ public class DMDParser {
 
 		// get all VMP's VIP type table
 		processVMPMultipleProperties(vmpFile);
+		
+		// get all VMP's VIP type table
+		processAMPMultipleProperties(ampFile);
 
-		// Delete properties for concept which has multiple active ingredients
+		// Delete properties for concept which has multiple active ingredients, in this case, AMP and VMP Multiple ISID will be deleted
 		mutipleStrengthProcessing();
 
 		// Extension Processing
 		extensionPropertyProcessing_SingleIngredient();
 
 		// Adding extension properties back with correct grouping
-		extensionPropertyProcessing_MultipleIngredient();
+		extensionPropertyProcessing_AMP_MultipleIngredient();
+		extensionPropertyProcessing_VMP_MultipleIngredient();
 
 		// Adding All Concepts
 		for (Map.Entry<ConceptType, List<ConceptDefinitionComponent>> e : allConcepts.entrySet()) {
@@ -467,7 +474,6 @@ public class DMDParser {
 						}
 					}
 					cdc.getProperty().removeAll(extentionProperties);
-
 				}
 			}
 		}
@@ -489,7 +495,50 @@ public class DMDParser {
 		return extensionConcepts;
 	}
 
-	private void extensionPropertyProcessing_MultipleIngredient() {
+	private void extensionPropertyProcessing_AMP_MultipleIngredient() {
+		
+		for (ConceptDefinitionComponent cdc : allConcepts.get(ConceptType.AMP)) {
+			String ampID = cdc.getCode();
+			List<Map<String, String>> properties = multipleAmps.get(ampID);
+			if (properties != null && properties.size() > 1) {
+				for (int i = 0; i < properties.size(); i++) {
+					Map<String, String> property = properties.get(i);
+					for (Map.Entry<String, String> entry : property.entrySet()) {
+						ConceptPropertyComponent propertyCom = new ConceptPropertyComponent();
+						String pName = entry.getKey();
+						String v = entry.getValue();
+						propertyCom.addExtension("http://csiro.au/StructureDefinition/subproperty-key",
+								new StringType().setValue(String.valueOf(i + 1)));
+						propertyCom.setCode(pName);
+
+						if (pName.equals("STRNTH")) {
+							float vf = Float.parseFloat(v);
+							int vf_int = (int) vf;
+							double diff = vf - vf_int;
+							if (diff == 0) {
+								propertyCom.setValue(new DecimalType(vf_int));
+							} else {
+								propertyCom.setValue(new DecimalType(v.toString()));
+							}
+						}
+
+						else if (pName.equals("UOMCD")|| pName.equals("ISID")) {
+							Coding coding = new Coding();
+							coding.setSystem(baseURL_CodeSystem);
+							coding.setCode(v);
+							propertyCom.setValue(coding);
+						}
+
+						cdc.addProperty(propertyCom);
+					}
+
+				}
+
+			}
+		}
+	}
+	
+	private void extensionPropertyProcessing_VMP_MultipleIngredient() {
 		for (ConceptDefinitionComponent cdc : allConcepts.get(ConceptType.VMP)) {
 			String vmpID = cdc.getCode();
 			List<Map<String, String>> properties = multipleVmps.get(vmpID);
@@ -536,6 +585,7 @@ public class DMDParser {
 
 			}
 		}
+		
 	}
 
 	private void addExtraConcepts(CodeSystem codeSystem) {
@@ -1228,6 +1278,35 @@ public class DMDParser {
 		}
 	}
 
+	
+	/**
+	 * Extract from AMP xml, save multiple grouped properties in map for future use
+	 */
+	private void processAMPMultipleProperties(File xmlFile) throws JAXBException, FileNotFoundException {
+		JAXBContext context = JAXBContext.newInstance(au.csiro.fhir.transforms.xml.dmd.v2_3.amp.ObjectFactory.class);
+		ACTUALMEDICINALPRODUCTS amp = (ACTUALMEDICINALPRODUCTS) context.createUnmarshaller().unmarshal(new FileReader(xmlFile));			
+		APINGREDIENT api = amp.getAPINGREDIENT();
+		for (ApiType apiType : api.getAPING()) {
+			String ampID = String.valueOf(apiType.getAPID());
+			if (!multipleAmps.containsKey(ampID)) {
+				multipleAmps.put(ampID, new ArrayList<Map<String, String>>());
+			}
+			Map<String, String> ingredientInfo = new HashMap<String, String>();
+			// ISID,STRNTH,UOMCD
+
+			if (apiType.getISID() != null) {
+				ingredientInfo.put("ISID", String.valueOf(apiType.getISID()));
+			}
+			if (apiType.getSTRNTH() != null) {
+				ingredientInfo.put("STRNTH", String.valueOf(apiType.getSTRNTH()));
+			}
+			if (apiType.getUOMCD() != null) {
+				ingredientInfo.put("UOMCD", String.valueOf(apiType.getUOMCD()));
+			}
+			
+			multipleAmps.get(ampID).add(ingredientInfo);
+		}
+	}
 	private void conceptIDDuplicationCheck(Set<String> conceptIdSet,
 			Map<String, ConceptDefinitionComponent> conceptRegister, String keyID) {
 		Set<String> remove = new LinkedHashSet<String>();
