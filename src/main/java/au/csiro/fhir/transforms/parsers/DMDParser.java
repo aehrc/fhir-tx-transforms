@@ -56,6 +56,7 @@ import org.hl7.fhir.r4.model.DateTimeType;
 import org.hl7.fhir.r4.model.DecimalType;
 import org.hl7.fhir.r4.model.Enumerations.ConceptMapEquivalence;
 import org.hl7.fhir.r4.model.Enumerations.PublicationStatus;
+import org.hl7.fhir.r4.model.Extension;
 import org.hl7.fhir.r4.model.IntegerType;
 import org.hl7.fhir.r4.model.StringType;
 
@@ -429,7 +430,7 @@ public class DMDParser {
 
 		// get all VMP's VIP type table
 		processVMPMultipleProperties(vmpFile);
-		
+
 		// get all VMP's VIP type table
 		processAMPMultipleProperties(ampFile);
 
@@ -480,14 +481,35 @@ public class DMDParser {
 	}
 
 	private Set<String> extensionPropertyProcessing_SingleIngredient() {
+
 		Set<String> extensionConcepts = new HashSet<String>();
 		for (Map.Entry<ConceptType, List<ConceptDefinitionComponent>> e : allConcepts.entrySet()) {
 			for (ConceptDefinitionComponent cdc : e.getValue()) {
+				StringType subpropertyKey = null;
+				String mapProperty = null;
 				for (ConceptPropertyComponent property : cdc.getProperty()) {
+					if ("parent".equals(property.getCode())) {
+						final String parent = property.getValueCodeType().asStringValue();
+						if ("AMP".equals(parent)) {
+							mapProperty = "AP_ING";
+						} else if ("VMP".equals(parent)) {
+							mapProperty = "VPI";
+						}
+					}
 					if (extensionPropertyNames.contains(property.getCode())) {
+						subpropertyKey = new StringType("1");
 						property.addExtension("http://csiro.au/StructureDefinition/subproperty-key",
-								new StringType().setValue("1"));
+								subpropertyKey);
 						extensionConcepts.add(cdc.getCode());
+					}
+				}
+				if (null != subpropertyKey) {
+					if (null != mapProperty) {
+						final Extension mapExt = cdc.addExtension().setUrl("http://csiro.au/StructureDefinition/subproperty-map");
+						mapExt.addExtension("property", new CodeType(mapProperty));
+						mapExt.addExtension("key", subpropertyKey);
+					} else {
+						throw new RuntimeException("Invalid parents for " + cdc.getCode());
 					}
 				}
 			}
@@ -496,19 +518,23 @@ public class DMDParser {
 	}
 
 	private void extensionPropertyProcessing_AMP_MultipleIngredient() {
-		
+
 		for (ConceptDefinitionComponent cdc : allConcepts.get(ConceptType.AMP)) {
 			String ampID = cdc.getCode();
 			List<Map<String, String>> properties = multipleAmps.get(ampID);
 			if (properties != null && properties.size() > 1) {
+				final Extension mapExt = cdc.addExtension().setUrl("http://csiro.au/StructureDefinition/subproperty-map");
+				mapExt.addExtension("property", new CodeType("AP_ING"));
+
 				for (int i = 0; i < properties.size(); i++) {
 					Map<String, String> property = properties.get(i);
+					StringType subpropertyKey = new StringType(String.valueOf(i + 1));
 					for (Map.Entry<String, String> entry : property.entrySet()) {
 						ConceptPropertyComponent propertyCom = new ConceptPropertyComponent();
 						String pName = entry.getKey();
 						String v = entry.getValue();
 						propertyCom.addExtension("http://csiro.au/StructureDefinition/subproperty-key",
-								new StringType().setValue(String.valueOf(i + 1)));
+								subpropertyKey);
 						propertyCom.setCode(pName);
 
 						if (pName.equals("STRNTH")) {
@@ -531,26 +557,32 @@ public class DMDParser {
 
 						cdc.addProperty(propertyCom);
 					}
+					mapExt.addExtension("key", subpropertyKey);
 
 				}
 
 			}
 		}
 	}
-	
+
 	private void extensionPropertyProcessing_VMP_MultipleIngredient() {
 		for (ConceptDefinitionComponent cdc : allConcepts.get(ConceptType.VMP)) {
+
 			String vmpID = cdc.getCode();
 			List<Map<String, String>> properties = multipleVmps.get(vmpID);
 			if (properties != null && properties.size() > 1) {
+				final Extension mapExt = cdc.addExtension().setUrl("http://csiro.au/StructureDefinition/subproperty-map");
+				mapExt.addExtension("property", new CodeType("VPI"));
+
 				for (int i = 0; i < properties.size(); i++) {
 					Map<String, String> property = properties.get(i);
+					StringType subpropertyKey = new StringType(String.valueOf(i + 1));
 					for (Map.Entry<String, String> entry : property.entrySet()) {
 						ConceptPropertyComponent propertyCom = new ConceptPropertyComponent();
 						String pName = entry.getKey();
 						String v = entry.getValue();
 						propertyCom.addExtension("http://csiro.au/StructureDefinition/subproperty-key",
-								new StringType().setValue(String.valueOf(i + 1)));
+								subpropertyKey);
 						propertyCom.setCode(pName);
 
 						if (pName.equals("STRNT_NMRTR_VAL") || pName.equals("STRNT_DNMTR_VAL")) {
@@ -580,12 +612,13 @@ public class DMDParser {
 						}
 						cdc.addProperty(propertyCom);
 					}
+					mapExt.addExtension("key", subpropertyKey);
 
 				}
 
 			}
 		}
-		
+
 	}
 
 	private void addExtraConcepts(CodeSystem codeSystem) {
@@ -1278,13 +1311,13 @@ public class DMDParser {
 		}
 	}
 
-	
+
 	/**
 	 * Extract from AMP xml, save multiple grouped properties in map for future use
 	 */
 	private void processAMPMultipleProperties(File xmlFile) throws JAXBException, FileNotFoundException {
 		JAXBContext context = JAXBContext.newInstance(au.csiro.fhir.transforms.xml.dmd.v2_3.amp.ObjectFactory.class);
-		ACTUALMEDICINALPRODUCTS amp = (ACTUALMEDICINALPRODUCTS) context.createUnmarshaller().unmarshal(new FileReader(xmlFile));			
+		ACTUALMEDICINALPRODUCTS amp = (ACTUALMEDICINALPRODUCTS) context.createUnmarshaller().unmarshal(new FileReader(xmlFile));
 		APINGREDIENT api = amp.getAPINGREDIENT();
 		for (ApiType apiType : api.getAPING()) {
 			String ampID = String.valueOf(apiType.getAPID());
@@ -1303,7 +1336,7 @@ public class DMDParser {
 			if (apiType.getUOMCD() != null) {
 				ingredientInfo.put("UOMCD", String.valueOf(apiType.getUOMCD()));
 			}
-			
+
 			multipleAmps.get(ampID).add(ingredientInfo);
 		}
 	}
