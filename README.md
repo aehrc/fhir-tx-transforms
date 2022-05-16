@@ -42,7 +42,7 @@ CTV 3
 >ctv3.version.VERSION.folder=PATH-TO-LOCAL-FOLDER
 
 ICD-10-UK
->icd10uk.version.VERSION.codeFile=PPATH-TO-LOCAL-FILE
+>icd10uk.version.VERSION.codeFile=PATH-TO-LOCAL-FILE
 
 NICIP
 >nicip.version.VERSION.folder=PATH-TO-LOCAL-FOLDER
@@ -61,6 +61,10 @@ DM+D
 >dmd.releaseFolder=PATH-TO-LOCAL-FOLDER
 
 >dmd.releaseSerial=Numeric value in DM+D file names
+
+>dmd.dmdReleaseNote=URL of dm+d release notes
+
+>dmd.gtinReleaseNote=URL of GTIN release notes
 
 >* The serial number used in dm+d file, example f_amp2_3080420.xml, the serial number should be 3080420
 
