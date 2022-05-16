@@ -172,11 +172,22 @@ public class Parser {
 	private void parseDMD() throws IOException, ParseException, JAXBException, NoSuchMethodException, SecurityException, IllegalAccessException, IllegalArgumentException, InvocationTargetException {
 		String dmdFolder = props.getProperty("dmd.releaseFolder");
 		String dmdSerial = props.getProperty("dmd.releaseSerial");
+		/*
+		Bill Lush changed 12/05/2022
+		2 properties added to populate release note URLs
+		*/
+		String dmdNote = props.getProperty("dmd.dmdReleaseNote");
+		String GTINNote = props.getProperty("dmd.gtinReleaseNote");
+		/* **** */
 		String supportFile =  "dm+d Content For Terminology Server.xlsx";
 		String gtinFile =  props.getProperty("dmd.gtinFile");
 		;		DMDParser parser = new DMDParser();
 		parser.processSupportCodeSystemWithUpdate(dmdFolder, dmdSerial, outFolder, txServer, feedClient);
-		parser.processCodeSystemWithUpdate( dmdFolder,dmdSerial ,supportFile,outFolder, txServer, feedClient);
+		/*
+		Bill Lush changed 12/05/2022
+		2 properties added to populate release note URLs
+		*/
+		parser.processCodeSystemWithUpdate( dmdFolder,dmdSerial ,supportFile,outFolder, txServer, feedClient, dmdNote, GTINNote);
 		parser.processGtinMappingmWithUpdate(dmdFolder,gtinFile,outFolder, txServer, feedClient);
 	}
 
