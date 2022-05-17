@@ -346,10 +346,6 @@ public class DMDParser {
 
 	}
 
-	/*
-	Bill Lush changed 12/05/2022
-	Added 2 parameters to pass the release note URLs
-	*/
 	public CodeSystem processCodeSystem(String dmdFolder, String releaseSerial, String supportFile, String version,
 			String outFolder, String dmdNote, String GTINNote) throws IOException, NoSuchMethodException, SecurityException, IllegalAccessException,
 			IllegalArgumentException, InvocationTargetException, JAXBException {
@@ -391,11 +387,6 @@ public class DMDParser {
 		registerProperty("INGREDIENT", supportFile, propertyRigister);
 		registerProperty("LOOKUP", supportFile, propertyRigister);
 		
-		/*
-		Bill Lush added 12/05/2022
-		To add additional properties to go against the dm+d root node
-		to hold http links to release notes published on NHS BSA dm+d web site.
-		*/
 		String dmdReleaseNoteName = "dmdReleaseNote";
 		PropertyComponent dmdReleaseNotePropertyComponent = new PropertyComponent();
 		dmdReleaseNotePropertyComponent.setCode(dmdReleaseNoteName).setDescription(dmdReleaseNoteName);
@@ -407,7 +398,6 @@ public class DMDParser {
 		GTINReleaseNotePropertyComponent.setCode(GTINReleaseNoteName).setDescription(GTINReleaseNoteName);
 		GTINReleaseNotePropertyComponent.setType(PropertyType.STRING);
 		propertyRigister.put(GTINReleaseNoteName, GTINReleaseNotePropertyComponent);
-		/* ***************** */
 
 		processExtentionProperty(propertyRigister);
 
@@ -448,10 +438,6 @@ public class DMDParser {
 		allConcepts.put(ConceptType.SUPPLIER, processSupplier(propertyRigister, allConceptsIdSet, lookupFile));
 		allConcepts.put(ConceptType.ROUTE, processRoute(propertyRigister, allConceptsIdSet, lookupFile));
 
-		/*
-		Bill Lush changed 12/05/2022
-		Added 2 parameters to pass the release note URLs
-		*/
 		addExtraConcepts(codeSystem, dmdNote, GTINNote);
 
 		// get all VMP's VIP type table
@@ -647,17 +633,9 @@ public class DMDParser {
 
 	}
 
-	/*
-	Bill Lush changed 12/05/2022
-	Added 2 parameters to pass the release note URLs
-	*/
 	private void addExtraConcepts(CodeSystem codeSystem, String dmdNote, String GTINNote) {
 		ConceptDefinitionComponent rootConcept = createConceptDefinition("dm+d",
 				"Dictionary of medicines and devices (dm+d)");
-		/*
-		Bill Lush changed 12/05/2022
-		Added functionality to populate parameters against the root dm+d node.
-		*/
 		ConceptPropertyComponent dmdReleaseNoteProperty = new ConceptPropertyComponent();
 		dmdReleaseNoteProperty.setCode("dmdReleaseNote");
 		dmdReleaseNoteProperty.setValue(new StringType(dmdNote));
@@ -666,7 +644,7 @@ public class DMDParser {
 		GTINReleaseNoteProperty.setCode("GTINReleaseNote");
 		GTINReleaseNoteProperty.setValue(new StringType(GTINNote));
 		rootConcept.addProperty(GTINReleaseNoteProperty);
-		//*******************
+
 		codeSystem.addConcept(rootConcept);
 
 		Arrays.asList(ConceptType.values()).forEach(type -> {
@@ -691,19 +669,11 @@ public class DMDParser {
 		concept.addProperty(addedParentProperty);
 	}
 
-	/*
-	Bill Lush changed 12/05/2022
-	Added 2 parameters to pass the release note URLs
-	*/
 	public void processCodeSystemWithUpdate(String dmdFolder, String dmdSerial, String supportFile, String outFolder,
 			String txServerUrl, FeedClient feedClient, String dmdNote, String GTINNote) throws IOException, NoSuchMethodException, SecurityException,
 			IllegalAccessException, IllegalArgumentException, InvocationTargetException, JAXBException {
 
 		String version = processVersionNumber(dmdFolder);
-		/*
-		Bill Lush changed 12/05/2022
-		Added 2 parameters to pass the release note URLs
-		*/
 		CodeSystem cs = processCodeSystem(dmdFolder, dmdSerial, supportFile, version, outFolder, dmdNote, GTINNote);
 		String outFileName = "CodeSystem-dmd-" + version + ".json";
 		File outFile = new File(outFolder, outFileName);
