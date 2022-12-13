@@ -176,11 +176,19 @@ public class Parser {
 		String GTINNote = props.getProperty("dmd.gtinReleaseNote");
 		String supportFile =  "dm+d Content For Terminology Server.xlsx";
 		String gtinFile =  props.getProperty("dmd.gtinFile");
+		String historyFile = props.getProperty("dmd.historyFile");
 
 		DMDParser parser = new DMDParser();
-		parser.processSupportCodeSystemWithUpdate(dmdFolder, dmdSerial, outFolder, txServer, feedClient);
-		parser.processCodeSystemWithUpdate( dmdFolder,dmdSerial ,supportFile,outFolder, txServer, feedClient, dmdNote, GTINNote);
-		parser.processGtinMappingmWithUpdate(dmdFolder,gtinFile,outFolder, txServer, feedClient);
+		//parser.processSupportCodeSystemWithUpdate(dmdFolder, dmdSerial, outFolder, txServer, feedClient);
+		//parser.processCodeSystemWithUpdate( dmdFolder,dmdSerial ,supportFile,outFolder, txServer, feedClient, dmdNote, GTINNote,historyFile);
+		if(gtinFile!=null) {
+			parser.processGtinMappingmWithUpdate(dmdFolder,gtinFile,outFolder, txServer, feedClient);
+		}
+		if(historyFile !=null) {
+			parser.processHitoryMappingWithUpdate(dmdFolder,historyFile,outFolder, txServer, feedClient);
+		}
+		
+		
 	}
 
 	public void parseAll(String configFileName) throws IOException, ParserConfigurationException, SAXException, ParseException, JAXBException, NoSuchMethodException, SecurityException, IllegalAccessException, IllegalArgumentException, InvocationTargetException {

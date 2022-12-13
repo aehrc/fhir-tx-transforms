@@ -1,0 +1,81 @@
+<?xml version="1.0"?>
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema">
+<!-- Defining the required complex types -->    
+
+
+<xs:complexType name="HISTType">   
+ <xs:all> 
+            <xs:element name="IDCURRENT"        type="xs:integer"   minOccurs="1" maxOccurs="1" />
+            <xs:element name="IDPREVIOUS"       type="xs:integer"   minOccurs="1" maxOccurs="1" />            
+			<xs:element name="START"            type="xs:date"      minOccurs="1" maxOccurs="1" />            
+			<xs:element name="END"              type="xs:date"      minOccurs="0" maxOccurs="1" />            
+  </xs:all>
+ </xs:complexType>
+
+<!-- Defining the required main elements with subelements, using the above defined complex type-->    
+
+ <xs:element name="HISTORY">
+  <xs:complexType>      
+     <xs:sequence>              
+     
+		<xs:element name="VTMS">
+          <xs:complexType>
+            <xs:sequence>              
+				<xs:element name="VTM" type="HISTType" minOccurs="0" maxOccurs="unbounded"/>
+            </xs:sequence>
+           </xs:complexType> 
+		</xs:element>
+		
+		<xs:element name="VMPS">
+          <xs:complexType>
+            <xs:sequence>              
+				<xs:element name="VMP" type="HISTType" minOccurs="0" maxOccurs="unbounded"/>
+            </xs:sequence>
+           </xs:complexType> 
+		</xs:element>
+
+		<xs:element name="INGS">
+          <xs:complexType>
+            <xs:sequence>              
+				<xs:element name="ING" type="HISTType" minOccurs="0" maxOccurs="unbounded"/>
+            </xs:sequence>
+           </xs:complexType> 
+		</xs:element>
+
+		<xs:element name="SUPPS">
+          <xs:complexType>
+            <xs:sequence>              
+				<xs:element name="SUPP" type="HISTType" minOccurs="0" maxOccurs="unbounded"/>
+            </xs:sequence>
+           </xs:complexType> 
+		</xs:element>
+
+		<xs:element name="FORMS">
+          <xs:complexType>
+            <xs:sequence>              
+				<xs:element name="FORM" type="HISTType" minOccurs="0" maxOccurs="unbounded"/>
+            </xs:sequence>
+           </xs:complexType> 
+		</xs:element>
+
+		<xs:element name="ROUTES">
+          <xs:complexType>
+            <xs:sequence>              
+				<xs:element name="ROUTE" type="HISTType" minOccurs="0" maxOccurs="unbounded"/>
+            </xs:sequence>
+           </xs:complexType> 
+		</xs:element>
+
+		<xs:element name="UOMS">
+          <xs:complexType>
+            <xs:sequence>              
+				<xs:element name="UOM" type="HISTType" minOccurs="0" maxOccurs="unbounded"/>
+            </xs:sequence>
+           </xs:complexType> 
+		</xs:element>
+
+    </xs:sequence>              
+   </xs:complexType>
+ </xs:element>
+
+</xs:schema>
