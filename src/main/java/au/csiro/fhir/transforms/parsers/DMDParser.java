@@ -218,6 +218,17 @@ public class DMDParser {
 	final String gtinMapTitle = "Dictionary of medicines and devices (dm+d) to GTIN Map";
 	final String historyMapTitle = "Dictionary of medicines and devices (dm+d) history Concept Map";
 	final String baseURL_CodeSystem_Gtin = "https://www.gs1.org/gtin";
+	
+	List<String> excludeVMPHistory  = new ArrayList<String>() {
+		private static final long serialVersionUID = 1L;
+		{
+            add("9854411000001103");
+            add("9854511000001104");
+            add("9854611000001100");
+            add("9854711000001109");
+            add("9854911000001106");
+        }
+    };
 
 	// Map by concept type to concept list.
 	Map<ConceptType, List<ConceptDefinitionComponent>> allConcepts = new LinkedHashMap<ConceptType, List<ConceptDefinitionComponent>>();
@@ -884,7 +895,10 @@ public class DMDParser {
 		for (HISTType histtype : list) {
 			String idPrevious = String.valueOf(histtype.getIDPREVIOUS());
 			if (!allConceptsIdSet.contains(idPrevious)) {
-				contentAdd.put(idPrevious, histtype);
+				if(!excludeVMPHistory.contains( String.valueOf(histtype.getIDCURRENT()))){
+					contentAdd.put(idPrevious, histtype);
+				}
+				
 			}
 		}
 
@@ -904,11 +918,13 @@ public class DMDParser {
 			if (name != null) {
 				conceptDefinitionComponent.setCode(id);
 
-				// Add parent
+				// Add parent - No Parent added
+				/*
 				ConceptPropertyComponent nativeParentProperty = new ConceptPropertyComponent();
 				nativeParentProperty.setCode("parent");
 				nativeParentProperty.setValue(new CodeType(type.getId()));
 				conceptDefinitionComponent.addProperty(nativeParentProperty);
+				*/
 
 				// Add inactive
 				ConceptPropertyComponent inactiveProperty = new ConceptPropertyComponent();
@@ -917,9 +933,10 @@ public class DMDParser {
 
 				conceptDefinitionComponent.addProperty(inactiveProperty);
 
-				// Add Display
+				// Add Display - to ID only, can be changed to actual description if needed
 
-				conceptDefinitionComponent.setDisplay(name);
+				//conceptDefinitionComponent.setDisplay(name);
+				conceptDefinitionComponent.setDisplay(id);
 				add.put(id, conceptDefinitionComponent);
 			}
 
@@ -946,8 +963,16 @@ public class DMDParser {
 				HistoryMapRow row = new HistoryMapRow();
 				row.sourceID = idPrevious;
 				row.targetID = idCurrent;
-				row.startDate = histtype.getSTART().toString();
-				row.endDate = histtype.getEND().toString();
+				row.startDate = histtype.getSTARTDT().toString();
+				row.endDate = histtype.getENDDT().toString();
+				rlist.add(row);
+			}
+			
+			else {
+				HistoryMapRow row = new HistoryMapRow();
+				row.sourceID = idPrevious;
+				row.targetID = idCurrent;
+				row.startDate = histtype.getSTARTDT().toString();
 				rlist.add(row);
 			}
 		}

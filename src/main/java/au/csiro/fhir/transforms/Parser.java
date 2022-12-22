@@ -179,8 +179,8 @@ public class Parser {
 		String historyFile = props.getProperty("dmd.historyFile");
 
 		DMDParser parser = new DMDParser();
-		//parser.processSupportCodeSystemWithUpdate(dmdFolder, dmdSerial, outFolder, txServer, feedClient);
-		//parser.processCodeSystemWithUpdate( dmdFolder,dmdSerial ,supportFile,outFolder, txServer, feedClient, dmdNote, GTINNote,historyFile);
+		parser.processSupportCodeSystemWithUpdate(dmdFolder, dmdSerial, outFolder, txServer, feedClient);
+		parser.processCodeSystemWithUpdate( dmdFolder,dmdSerial ,supportFile,outFolder, txServer, feedClient, dmdNote, GTINNote,historyFile);
 		if(gtinFile!=null) {
 			parser.processGtinMappingmWithUpdate(dmdFolder,gtinFile,outFolder, txServer, feedClient);
 		}

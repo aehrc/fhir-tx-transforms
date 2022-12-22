@@ -7,8 +7,8 @@
  <xs:all> 
             <xs:element name="IDCURRENT"        type="xs:integer"   minOccurs="1" maxOccurs="1" />
             <xs:element name="IDPREVIOUS"       type="xs:integer"   minOccurs="1" maxOccurs="1" />            
-			<xs:element name="START"            type="xs:date"      minOccurs="1" maxOccurs="1" />            
-			<xs:element name="END"              type="xs:date"      minOccurs="0" maxOccurs="1" />            
+			<xs:element name="STARTDT"          type="xs:date"      minOccurs="1" maxOccurs="1" />            
+			<xs:element name="ENDDT"            type="xs:date"      minOccurs="0" maxOccurs="1" />            
   </xs:all>
  </xs:complexType>
 
