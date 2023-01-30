@@ -379,7 +379,7 @@ public class DMDParser {
 		Map<String, List<HistoryMapRow>> allMap = new HashMap<String, List<HistoryMapRow>>();
 
 		List<HistoryMapRow> tempList = new ArrayList<HistoryMapRow>();
-		conceptMap.setId(gtinMapID + "-" + version.replaceAll("\\.", ""));
+		conceptMap.setId(historyMapID + "-" + version.replaceAll("\\.", ""));
 		conceptMap.setUrl(baseURL_ConceptMap_History)
 				.setDescription(
 						"A FHIR ConceptMap represent the hisotry of  Dictionary of medicines and devices (dm+d)")
@@ -973,6 +973,9 @@ public class DMDParser {
 				row.sourceID = idPrevious;
 				row.targetID = idCurrent;
 				row.startDate = histtype.getSTARTDT().toString();
+				if(histtype.getENDDT() !=null) {
+					row.endDate = histtype.getENDDT().toString();
+				}
 				rlist.add(row);
 			}
 		}
