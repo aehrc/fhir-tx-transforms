@@ -102,6 +102,8 @@ import au.csiro.fhir.transforms.xml.dmd.v2_3.vmpp.VIRTUALMEDPRODUCTPACK;
 import au.csiro.fhir.transforms.xml.dmd.v2_3.vmpp.VmppType;
 import au.csiro.fhir.transforms.xml.dmd.v2_3.vtm.VIRTUALTHERAPEUTICMOIETIES;
 import au.csiro.fhir.transforms.xml.dmd.v2_3.vtm.VIRTUALTHERAPEUTICMOIETIES.VTM;
+import au.csiro.fhir.transforms.xml.dmd.vtming.v1_0.VTMINGREDIENTS;
+import au.csiro.fhir.transforms.xml.dmd.vtming.v1_0.VTMINGREDIENTS.VTMING;
 import ca.uhn.fhir.context.FhirContext;
 
 enum ConceptType {
@@ -396,6 +398,8 @@ public class DMDParser {
 		JAXBContext context = JAXBContext
 				.newInstance(au.csiro.fhir.transforms.xml.dmd.history.v1_0.ObjectFactory.class);
 		HISTORY history = (HISTORY) context.createUnmarshaller().unmarshal(new FileReader(historyFileName));
+		
+		
 
 		tempList.addAll(processHisotryMapContents(history.getVMPS().getVMP()));
 		tempList.addAll(processHisotryMapContents(history.getFORMS().getFORM()));
@@ -406,6 +410,40 @@ public class DMDParser {
 		tempList.addAll(processHisotryMapContents(history.getSUPPS().getSUPP()));
 
 		logger.info(String.format("Loaded Mapping row %s ", tempList.size()));
+		
+		/*
+		 * Pre process history map file - for 5 deleted VTM concepts.
+		 * Ideally, this can be done from file level. 
+		 */
+		
+		List<HistoryMapRow> removeList = new ArrayList<HistoryMapRow>();
+		for (HistoryMapRow row : tempList) {
+			String pid = row.sourceID; 
+			String tid = row.targetID;
+			if(pid.equals("9854411000001103")
+					||pid.equals("9854511000001104") 
+					||pid.equals("9854611000001100") 
+					||pid.equals("9854711000001109") 
+					||pid.equals("9854911000001106") ) {
+				removeList.add(row);
+			}	
+			
+			if(tid.equals("9854411000001103")
+					||tid.equals("9854511000001104") 
+					||tid.equals("9854611000001100") 
+					||tid.equals("9854711000001109") 
+					||tid.equals("9854911000001106") ) {
+				removeList.add(row);
+			}	
+			
+		}
+		
+		tempList.removeAll(removeList);
+		
+		logger.info(String.format("Loaded cleaned Mapping row %s  ", tempList.size()));
+		/*
+		 * End of Pre process history map file
+		 */
 
 		for (HistoryMapRow row : tempList) {
 			String pid = row.sourceID;
@@ -463,7 +501,7 @@ public class DMDParser {
 	}
 
 	public CodeSystem processCodeSystem(String dmdFolder, String releaseSerial, String supportFile, String version,
-			String outFolder, String dmdNote, String gtinNote, String historyFile)
+			String outFolder, String dmdNote, String gtinNote, String historyFile, String vtmingFile)
 			throws IOException, NoSuchMethodException, SecurityException, IllegalAccessException,
 			IllegalArgumentException, InvocationTargetException, JAXBException {
 
@@ -579,6 +617,11 @@ public class DMDParser {
 		if (historyFile != null) {
 			historyConceptsProcessing(historyFile);
 		}
+			
+		// Process VTM-ING Property
+		if (vtmingFile != null) {
+			 vtmingPropertyProcessing(vtmingFile);
+		}
 
 		// Adding All Concepts
 		for (Map.Entry<ConceptType, List<ConceptDefinitionComponent>> e : allConcepts.entrySet()) {
@@ -616,9 +659,7 @@ public class DMDParser {
 		}
 	}
 
-	private Set<String> extensionPropertyProcessing_SingleIngredient() {
-
-		Set<String> extensionConcepts = new HashSet<String>();
+	private void extensionPropertyProcessing_SingleIngredient() {
 		for (Map.Entry<ConceptType, List<ConceptDefinitionComponent>> e : allConcepts.entrySet()) {
 			for (ConceptDefinitionComponent cdc : e.getValue()) {
 				StringType subpropertyKey = null;
@@ -635,7 +676,7 @@ public class DMDParser {
 					if (extensionPropertyNames.contains(property.getCode())) {
 						subpropertyKey = new StringType("1");
 						property.addExtension("http://csiro.au/StructureDefinition/subproperty-key", subpropertyKey);
-						extensionConcepts.add(cdc.getCode());
+						//extensionConcepts.add(cdc.getCode());
 					}
 				}
 				if (null != subpropertyKey) {
@@ -650,7 +691,6 @@ public class DMDParser {
 				}
 			}
 		}
-		return extensionConcepts;
 	}
 
 	private void extensionPropertyProcessing_AMP_MultipleIngredient() {
@@ -794,7 +834,7 @@ public class DMDParser {
 	}
 
 	public void processCodeSystemWithUpdate(String dmdFolder, String dmdSerial, String supportFile, String outFolder,
-			String txServerUrl, FeedClient feedClient, String dmdNote, String gtinNote, String historyFile)
+			String txServerUrl, FeedClient feedClient, String dmdNote, String gtinNote, String historyFile, String vtmingFile)
 			throws IOException, NoSuchMethodException, SecurityException, IllegalAccessException,
 			IllegalArgumentException, InvocationTargetException, JAXBException {
 
@@ -811,7 +851,7 @@ public class DMDParser {
 
 		String version = processVersionNumber(dmdFolder);
 		CodeSystem cs = processCodeSystem(dmdFolder, dmdSerial, supportFile, version, outFolder, dmdNote, gtinNote,
-				historyFile);
+				historyFile,vtmingFile);
 		String outFileName = "CodeSystem-dmd-" + version + ".json";
 		File outFile = new File(outFolder, outFileName);
 
@@ -885,6 +925,75 @@ public class DMDParser {
 
 		logger.info(String.format("Concept List with lost concepts includes %s concepts", allConceptsIdSet.size()));
 
+	}
+	
+	/**
+	 * Process Extra VTM Properties
+	 * 
+	 * IS ID need to be used as extension property to be consistent with other requirement. 
+	 * 
+	 * Added Extention to ISID property 
+	 * 
+	    {
+            "url":"http://csiro.au/StructureDefinition/subproperty-key",
+            "valueString":"1"
+        }
+        
+        Add Extention to Concept
+      "extension":[
+      {
+         "url":"http://csiro.au/StructureDefinition/subproperty-map",
+         "extension":[
+            {
+               "url":"property",
+               "valueCode":"ING"
+            },
+            {
+               "url":"key",
+               "valueString":"1"
+            }
+         ]
+      }
+   ]
+	 */
+
+	public void vtmingPropertyProcessing(String vtmingFile) throws JAXBException, FileNotFoundException {
+		
+
+		JAXBContext context = JAXBContext
+				.newInstance(au.csiro.fhir.transforms.xml.dmd.vtming.v1_0.ObjectFactory.class);
+		VTMINGREDIENTS vtmingredients = (VTMINGREDIENTS) context.createUnmarshaller().unmarshal(new FileReader(vtmingFile));
+		Map<String,String> vtmIngMap = new HashMap<>();
+		for (VTMING vtming : vtmingredients.getVTMING()) {
+			vtmIngMap.put(String.valueOf(vtming.getVTMID()), String.valueOf(vtming.getISID()));
+		}
+
+		for (Map.Entry<ConceptType, List<ConceptDefinitionComponent>> e : allConcepts.entrySet()) {
+			ConceptType type = e.getKey();
+			if(type.equals(ConceptType.VTM)) {
+				for (ConceptDefinitionComponent cdc : e.getValue()) {
+					if (vtmIngMap.containsKey(cdc.getCode())) {
+						//logger.info("Find VTM ING " + cdc.getCode());
+						String mapProperty = "ING";
+						StringType subpropertyKey = new StringType("1");
+						final Extension mapExt = cdc.addExtension()
+								.setUrl("http://csiro.au/StructureDefinition/subproperty-map");
+						mapExt.addExtension("property", new CodeType(mapProperty));
+						mapExt.addExtension("key", subpropertyKey);
+						ConceptPropertyComponent conceptPropertyComponent = new ConceptPropertyComponent();
+						
+						conceptPropertyComponent.addExtension("http://csiro.au/StructureDefinition/subproperty-key", subpropertyKey);
+						conceptPropertyComponent.setCode("ISID");
+						Coding coding = new Coding();
+						coding.setSystem(baseURL_CodeSystem); // NHS Feed back item 8
+						coding.setCode(vtmIngMap.get(cdc.getCode()));
+						conceptPropertyComponent.setValue(coding);
+						cdc.addProperty(conceptPropertyComponent);
+					}
+				}
+			}
+			
+		}
 	}
 
 	private void processMissingContents(ConceptType type, List<HISTType> list) {
