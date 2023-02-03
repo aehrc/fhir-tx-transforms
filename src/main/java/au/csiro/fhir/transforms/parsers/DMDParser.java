@@ -963,32 +963,45 @@ public class DMDParser {
 		JAXBContext context = JAXBContext
 				.newInstance(au.csiro.fhir.transforms.xml.dmd.vtming.v1_0.ObjectFactory.class);
 		VTMINGREDIENTS vtmingredients = (VTMINGREDIENTS) context.createUnmarshaller().unmarshal(new FileReader(vtmingFile));
-		Map<String,String> vtmIngMap = new HashMap<>();
+		Map<String,Set<String>> vtmIngMap = new HashMap<>();
 		for (VTMING vtming : vtmingredients.getVTMING()) {
-			vtmIngMap.put(String.valueOf(vtming.getVTMID()), String.valueOf(vtming.getISID()));
+			String vtmID = String.valueOf(vtming.getVTMID());
+			if(!vtmIngMap.containsKey(vtmID)) {
+				vtmIngMap.put(vtmID, new HashSet<>());
+			}
+			vtmIngMap.get(vtmID).add(String.valueOf(vtming.getISID()));
 		}
 
 		for (Map.Entry<ConceptType, List<ConceptDefinitionComponent>> e : allConcepts.entrySet()) {
 			ConceptType type = e.getKey();
 			if(type.equals(ConceptType.VTM)) {
 				for (ConceptDefinitionComponent cdc : e.getValue()) {
-					if (vtmIngMap.containsKey(cdc.getCode())) {
-						//logger.info("Find VTM ING " + cdc.getCode());
+					String cid = cdc.getCode();
+
+					if (vtmIngMap.containsKey(cid)) {
+						Set<String> ingIDSet = vtmIngMap.get(cid);
 						String mapProperty = "ING";
-						StringType subpropertyKey = new StringType("1");
-						final Extension mapExt = cdc.addExtension()
-								.setUrl("http://csiro.au/StructureDefinition/subproperty-map");
-						mapExt.addExtension("property", new CodeType(mapProperty));
-						mapExt.addExtension("key", subpropertyKey);
-						ConceptPropertyComponent conceptPropertyComponent = new ConceptPropertyComponent();
+						int i = 1;
+						for(String ingID :ingIDSet ) {
+							//logger.info("Find VTM ING " + cdc.getCode());
+							
+							StringType subpropertyKey = new StringType(String.valueOf(i));
+							final Extension mapExt = cdc.addExtension()
+									.setUrl("http://csiro.au/StructureDefinition/subproperty-map");
+							mapExt.addExtension("property", new CodeType(mapProperty));
+							mapExt.addExtension("key", subpropertyKey);
+							ConceptPropertyComponent conceptPropertyComponent = new ConceptPropertyComponent();
+							
+							conceptPropertyComponent.addExtension("http://csiro.au/StructureDefinition/subproperty-key", subpropertyKey);
+							conceptPropertyComponent.setCode("ISID");
+							Coding coding = new Coding();
+							coding.setSystem(baseURL_CodeSystem); // NHS Feed back item 8
+							coding.setCode(ingID);
+							conceptPropertyComponent.setValue(coding);
+							cdc.addProperty(conceptPropertyComponent);
+							i++;
+						}
 						
-						conceptPropertyComponent.addExtension("http://csiro.au/StructureDefinition/subproperty-key", subpropertyKey);
-						conceptPropertyComponent.setCode("ISID");
-						Coding coding = new Coding();
-						coding.setSystem(baseURL_CodeSystem); // NHS Feed back item 8
-						coding.setCode(vtmIngMap.get(cdc.getCode()));
-						conceptPropertyComponent.setValue(coding);
-						cdc.addProperty(conceptPropertyComponent);
 					}
 				}
 			}
