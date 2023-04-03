@@ -193,14 +193,13 @@
 						<xjbSource>src/main/resources/global.xjb</xjbSource>
 					</xjbSources>
 					<sources>
-						<source>src/main/resources/vtm_ing_v1_0.xsd</source>
+						<source>src/main/resources/tradeFamily_v1_0.xsd</source>
 					</sources>
 					<outputDirectory>${basedir}/src/main/java</outputDirectory>
 					<clearOutputDir>false</clearOutputDir>
 				</configuration>
 			</plugin>
 			-->
-			
 		</plugins>
 	</build>
 </project>

@@ -71,6 +71,10 @@ import au.csiro.fhir.transforms.xml.dmd.gtin.GTINDETAILS;
 import au.csiro.fhir.transforms.xml.dmd.gtin.GTINType;
 import au.csiro.fhir.transforms.xml.dmd.history.v1_0.HISTORY;
 import au.csiro.fhir.transforms.xml.dmd.history.v1_0.HISTType;
+import au.csiro.fhir.transforms.xml.dmd.tradefamily.v1_0.TFAMPType;
+import au.csiro.fhir.transforms.xml.dmd.tradefamily.v1_0.TFGType;
+import au.csiro.fhir.transforms.xml.dmd.tradefamily.v1_0.TFType;
+import au.csiro.fhir.transforms.xml.dmd.tradefamily.v1_0.TRADEFAMILY;
 import au.csiro.fhir.transforms.xml.dmd.v2_3.amp.ACTUALMEDICINALPRODUCTS;
 import au.csiro.fhir.transforms.xml.dmd.v2_3.amp.ACTUALMEDICINALPRODUCTS.APINGREDIENT;
 import au.csiro.fhir.transforms.xml.dmd.v2_3.amp.AmpType;
@@ -124,8 +128,13 @@ enum ConceptType {
 	VMP("Virtual Medicinal Product", "Virtual Medicinal Product", "VMP"),
 	VMPP("Virtual Medicinal Product Pack", "Virtual Medicinal Product Pack", "VMPP"),
 	VTM("Virtual Therapeutic Moiety", "Virtual Therapeutic Moiety", "VTM"),
-	INGREDIENT("Ingredient", "Ingredient", "INGREDIENT"), UNITOFMEASURE("Unit of Measure", "Unit of Measure", "UOM"),
-	ROUTE("Route", "Route", "ROUTE"), SUPPLIER("Supplier", "Supplier", "SUPPLIER"), FORM("Form", "Form", "FORM");
+	INGREDIENT("Ingredient", "Ingredient", "INGREDIENT"), 
+	UNITOFMEASURE("Unit of Measure", "Unit of Measure", "UOM"),
+	ROUTE("Route", "Route", "ROUTE"),
+	SUPPLIER("Supplier", "Supplier", "SUPPLIER"),
+	FORM("Form", "Form", "FORM"),
+	TRADEFAMILY("Trade Family", "Trade Family", "TF"),
+	TRADEFAMILYGROUP("Trade Family Grouper", "Trade Family Grouper", "TFG");
 
 	private String name;
 	private String fullName;
@@ -501,7 +510,7 @@ public class DMDParser {
 	}
 
 	public CodeSystem processCodeSystem(String dmdFolder, String releaseSerial, String supportFile, String version,
-			String outFolder, String dmdNote, String gtinNote, String historyFile, String vtmingFile)
+			String outFolder, String dmdNote, String gtinNote, String historyFile, String vtmingFile, String tradeFamilyFile)
 			throws IOException, NoSuchMethodException, SecurityException, IllegalAccessException,
 			IllegalArgumentException, InvocationTargetException, JAXBException {
 
@@ -514,6 +523,8 @@ public class DMDParser {
 		File vmpFile = new File(dmdFolder, "f_vmp2_" + releaseSerial + ".xml");
 		File vmppFile = new File(dmdFolder, "f_vmpp2_" + releaseSerial + ".xml");
 		File lookupFile = new File(dmdFolder, "f_lookup2_" + releaseSerial + ".xml");
+		
+
 
 		if (lookupTables_codeSystem.size() < 1) {
 			loadLookupTables(lookupFile);
@@ -559,27 +570,9 @@ public class DMDParser {
 		logger.info("Property Register " + propertyRigister.size());
 
 		for (String name : propertyRigister.keySet()) {
-			logger.info("Property " + name + " with type " + propertyRigister.get(name).getType().getDisplay());
+			System.out.println("Property " + name + " with type " + propertyRigister.get(name).getType().getDisplay());
 		}
 
-		// Add all property into CodeSystem
-		for (PropertyComponent pr : propertyRigister.values()) {
-			codeSystem.addProperty(pr);
-
-			// Add filter
-			CodeSystemFilterComponent codeSystemFilterComponent = new CodeSystemFilterComponent();
-			codeSystemFilterComponent.setCode(pr.getCode());
-			codeSystemFilterComponent.addOperator(FilterOperator.IN);
-			codeSystemFilterComponent.addOperator(FilterOperator.EQUAL);
-			codeSystemFilterComponent.addOperator(FilterOperator.NOTIN);
-			codeSystemFilterComponent.addOperator(FilterOperator.EXISTS);
-			if (pr.getType().equals(PropertyType.STRING)) {
-				codeSystemFilterComponent.addOperator(FilterOperator.REGEX);
-			}
-			codeSystemFilterComponent.setDescription("Property filter for " + pr.getCode());
-			codeSystemFilterComponent.setValue("Property filter for " + pr.getCode());
-			codeSystem.addFilter(codeSystemFilterComponent);
-		}
 
 		allConcepts.put(ConceptType.AMP, processAMP(propertyRigister, allConceptsIdSet, ampFile));
 		allConcepts.put(ConceptType.AMPP, processAMPP(propertyRigister, allConceptsIdSet, amppFile));
@@ -592,6 +585,25 @@ public class DMDParser {
 		allConcepts.put(ConceptType.FORM, processForm(propertyRigister, allConceptsIdSet, lookupFile));
 		allConcepts.put(ConceptType.SUPPLIER, processSupplier(propertyRigister, allConceptsIdSet, lookupFile));
 		allConcepts.put(ConceptType.ROUTE, processRoute(propertyRigister, allConceptsIdSet, lookupFile));
+		if(tradeFamilyFile!=null) {
+			// Update property register
+			logger.info("Process TradeFamily");
+			propertyRigister.put("TFID", createPropertyComponent("TFID", "TFID",PropertyType.CODING));
+			propertyRigister.put("TFIDPREV", createPropertyComponent("TFIDPREV", "TFIDPREV",PropertyType.CODING));
+			propertyRigister.put("TFIDDT", createPropertyComponent("TFIDDT", "TFIDDT",PropertyType.DATETIME));
+			propertyRigister.put("TFGID", createPropertyComponent("TFGID", "TFGID",PropertyType.CODING));
+			propertyRigister.put("TFIDDT", createPropertyComponent("TFIDDT", "TFIDDT",PropertyType.DATETIME));
+			
+			propertyRigister.put("TFGID", createPropertyComponent("TFGID", "TFGID",PropertyType.CODING));
+			propertyRigister.put("TFGIDDT", createPropertyComponent("TFGIDDT", "TFGIDDT",PropertyType.DATETIME));
+			propertyRigister.put("TFGIDPREV", createPropertyComponent("TFGIDPREV", "TFGIDPREV",PropertyType.CODING));
+
+			logger.info("Property Register with Trade Family " + propertyRigister.size());
+			
+			allConcepts.put(ConceptType.TRADEFAMILY, processTradeFamily(propertyRigister, allConceptsIdSet, new File(tradeFamilyFile)));
+			allConcepts.put(ConceptType.TRADEFAMILYGROUP, processTradeFamilyGroup(propertyRigister, allConceptsIdSet, new File(tradeFamilyFile)));
+			processTFAMP(new File(tradeFamilyFile));
+		}
 
 		addExtraConcepts(codeSystem, dmdNote, gtinNote);
 
@@ -621,6 +633,26 @@ public class DMDParser {
 		// Process VTM-ING Property
 		if (vtmingFile != null) {
 			 vtmingPropertyProcessing(vtmingFile);
+		}
+		
+
+		// Add all property into CodeSystem
+		for (PropertyComponent pr : propertyRigister.values()) {
+			codeSystem.addProperty(pr);
+
+			// Add filter
+			CodeSystemFilterComponent codeSystemFilterComponent = new CodeSystemFilterComponent();
+			codeSystemFilterComponent.setCode(pr.getCode());
+			codeSystemFilterComponent.addOperator(FilterOperator.IN);
+			codeSystemFilterComponent.addOperator(FilterOperator.EQUAL);
+			codeSystemFilterComponent.addOperator(FilterOperator.NOTIN);
+			codeSystemFilterComponent.addOperator(FilterOperator.EXISTS);
+			if (pr.getType().equals(PropertyType.STRING)) {
+				codeSystemFilterComponent.addOperator(FilterOperator.REGEX);
+			}
+			codeSystemFilterComponent.setDescription("Property filter for " + pr.getCode());
+			codeSystemFilterComponent.setValue("Property filter for " + pr.getCode());
+			codeSystem.addFilter(codeSystemFilterComponent);
 		}
 
 		// Adding All Concepts
@@ -834,7 +866,7 @@ public class DMDParser {
 	}
 
 	public void processCodeSystemWithUpdate(String dmdFolder, String dmdSerial, String supportFile, String outFolder,
-			String txServerUrl, FeedClient feedClient, String dmdNote, String gtinNote, String historyFile, String vtmingFile)
+			String txServerUrl, FeedClient feedClient, String dmdNote, String gtinNote, String historyFile, String vtmingFile,String tradeFamilyFile)
 			throws IOException, NoSuchMethodException, SecurityException, IllegalAccessException,
 			IllegalArgumentException, InvocationTargetException, JAXBException {
 
@@ -851,7 +883,7 @@ public class DMDParser {
 
 		String version = processVersionNumber(dmdFolder);
 		CodeSystem cs = processCodeSystem(dmdFolder, dmdSerial, supportFile, version, outFolder, dmdNote, gtinNote,
-				historyFile,vtmingFile);
+				historyFile,vtmingFile,tradeFamilyFile);
 		String outFileName = "CodeSystem-dmd-" + version + ".json";
 		File outFile = new File(outFolder, outFileName);
 
@@ -1535,6 +1567,38 @@ public class DMDParser {
 		conceptIDDuplicationCheck(conceptIdSet, conceptRegister, keyID);
 		return new ArrayList<ConceptDefinitionComponent>(conceptRegister.values());
 	}
+	
+	private List<ConceptDefinitionComponent> processTradeFamily(Map<String, PropertyComponent> propertyRigister,
+			Set<String> conceptIdSet, File xmlFile) throws JAXBException, FileNotFoundException, NoSuchMethodException,
+			SecurityException, IllegalAccessException, IllegalArgumentException, InvocationTargetException {
+		JAXBContext context = JAXBContext.newInstance(au.csiro.fhir.transforms.xml.dmd.tradefamily.v1_0.ObjectFactory.class);
+		TRADEFAMILY tradeFamilies = (TRADEFAMILY) context.createUnmarshaller().unmarshal(new FileReader(xmlFile));
+		Map<String, ConceptDefinitionComponent> conceptRegister = new LinkedHashMap<String, ConceptDefinitionComponent>();
+		String keyID = "TFID";
+		Set<String> parents = new LinkedHashSet<>(Arrays.asList("TFGID"));
+		transferComplexType(conceptRegister, propertyRigister, keyID, "NM", null , ConceptType.TRADEFAMILY,parents,
+				TFType.class, tradeFamilies.getTFS().getTF());
+		conceptIDDuplicationCheck(conceptIdSet, conceptRegister, keyID);
+		return new ArrayList<ConceptDefinitionComponent>(conceptRegister.values());
+
+	}
+	
+	
+	
+	private List<ConceptDefinitionComponent> processTradeFamilyGroup(Map<String, PropertyComponent> propertyRigister,
+			Set<String> conceptIdSet, File xmlFile) throws JAXBException, FileNotFoundException, NoSuchMethodException,
+			SecurityException, IllegalAccessException, IllegalArgumentException, InvocationTargetException {
+		JAXBContext context = JAXBContext.newInstance(au.csiro.fhir.transforms.xml.dmd.tradefamily.v1_0.ObjectFactory.class);
+		TRADEFAMILY tradeFamilies = (TRADEFAMILY) context.createUnmarshaller().unmarshal(new FileReader(xmlFile));
+		Map<String, ConceptDefinitionComponent> conceptRegister = new LinkedHashMap<String, ConceptDefinitionComponent>();
+		String keyID = "TFGID";
+		//Set<String> parents = new LinkedHashSet<>(Arrays.asList("VPID"));
+		transferComplexType(conceptRegister, propertyRigister, keyID, "NM", null , ConceptType.TRADEFAMILYGROUP,null,
+				TFGType.class, tradeFamilies.getTFGS().getTFG());
+		conceptIDDuplicationCheck(conceptIdSet, conceptRegister, keyID);
+		return new ArrayList<ConceptDefinitionComponent>(conceptRegister.values());
+
+	}
 
 	private void transferComplexType(Map<String, ConceptDefinitionComponent> conceptRegister,
 			Map<String, PropertyComponent> propertyRigister, String idField, String displayField, String synonymField,
@@ -1588,7 +1652,8 @@ public class DMDParser {
 					designation.setValue(v.toString());
 					designation.setUse(coding);
 					conceptRegister.get(id).addDesignation(designation);
-				} else if (parentField != null && parentField.contains(propertyName) && v != null) {
+				}
+				else if (parentField != null && parentField.contains(propertyName) && v != null) {
 					// add parent
 					ConceptPropertyComponent addedParentProperty = new ConceptPropertyComponent();
 					addedParentProperty.setCode("parent");
@@ -1781,6 +1846,30 @@ public class DMDParser {
 			multipleAmps.get(ampID).add(ingredientInfo);
 		}
 	}
+	
+	/**
+	 * Add TF as Parents of AMP. Only run when trade family file is provided. 
+	 * @throws JAXBException 
+	 * @throws FileNotFoundException 
+	 */
+	private void processTFAMP(File tradeFamilyFile) throws JAXBException, FileNotFoundException {
+		List<ConceptDefinitionComponent> allAMPs = allConcepts.get(ConceptType.AMP);
+		Map<String, ConceptDefinitionComponent> ampMap = new HashMap<>();
+		for(ConceptDefinitionComponent component : allAMPs) {
+			ampMap.put(component.getCode(), component);
+		}
+		JAXBContext context = JAXBContext.newInstance(au.csiro.fhir.transforms.xml.dmd.tradefamily.v1_0.ObjectFactory.class);
+		TRADEFAMILY tradeFamilies = (TRADEFAMILY) context.createUnmarshaller().unmarshal(new FileReader(tradeFamilyFile));
+		for(TFAMPType tfampType :tradeFamilies.getTFAMPS().getTFAMP()) {
+			ConceptDefinitionComponent com = ampMap.get(String.valueOf(tfampType.getAPID()));
+			ConceptPropertyComponent addedParentProperty = new ConceptPropertyComponent();
+			addedParentProperty.setCode("parent");
+			addedParentProperty.setValue(new CodeType(String.valueOf(tfampType.getTFID())));
+			com.addProperty(addedParentProperty);
+			System.out.println("Add Parent for AMP " + tfampType.getAPID() +  " With Parent TF" + tfampType.getTFID() );
+		}
+			
+	}
 
 	private void conceptIDDuplicationCheck(Set<String> conceptIdSet,
 			Map<String, ConceptDefinitionComponent> conceptRegister, String keyID) {
@@ -1832,6 +1921,14 @@ public class DMDParser {
 		} else {
 			return inputStream;
 		}
+	}
+	
+	private PropertyComponent createPropertyComponent(String code, String desc, PropertyType type) {
+		PropertyComponent propertyComponent = new PropertyComponent();
+		propertyComponent.setCode(code).setDescription(desc);
+		propertyComponent.setType(type);
+		
+		return propertyComponent;
 	}
 
 }
