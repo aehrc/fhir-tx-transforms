@@ -1035,7 +1035,7 @@ public class DMDParser {
 
 		if(processBNF) {
 
-			logger.info("Processing BNF data for AMP.");
+			logger.info("Processing BNF data for VMP.");
 
 			transferComplexTypeForBNF(conceptRegister, propertyRigister, keyID, vmp.getVMPS().getVMP());
 		}
