@@ -228,10 +228,9 @@ public class DMDParser {
 	Map<String, List<Map<String, String>>> multipleVmps = new HashMap<String, List<Map<String, String>>>();
 	// Multiple Ingredient AMPs
 	Map<String, List<Map<String, String>>> multipleAmps = new HashMap<String, List<Map<String, String>>>();
-	// Bonus File Lookup
-	Map<BigInteger, Object> bonusFileLookup = new HashMap<BigInteger, Object>();
-	// BNF objects
-	BNFS bnf;
+	// Bonus File Lookups
+	Map<BigInteger, Object> bonusFileLookupAMP = new HashMap<BigInteger, Object>();
+	Map<BigInteger, Object> bonusFileLookupVMP = new HashMap<BigInteger, Object>();
 
 	public DMDParser() {
 	}
@@ -383,18 +382,17 @@ public class DMDParser {
 
 			// Open the dmd+d bonus file - unmarshall it into an object
 			JAXBContext context = JAXBContext.newInstance(au.csiro.fhir.transforms.xml.dmd.v2_3.bnf.BNFObjectFactory.class);
-			bnf = (BNFS) context.createUnmarshaller().unmarshal(new FileReader(bnfFile));
+			BNFS bnf = (BNFS) context.createUnmarshaller().unmarshal(new FileReader(bnfFile));
 
 			// Iterate over the BNFS object and put into a data structure that we can lookup based on the
 			for(BnfVmpType v : bnf.getVMPS().getVMP()) {
-				bonusFileLookup.putIfAbsent(v.getVPID(), v);
+				bonusFileLookupVMP.putIfAbsent(v.getVPID(), v);
 			}
 
 			for(BnfAmpType v : bnf.getAMPS().getAMP()) {
-				bonusFileLookup.putIfAbsent(v.getAPID(), v);
+				bonusFileLookupAMP.putIfAbsent(v.getAPID(), v);
 			}
 			
-			logger.info("Bonus File entries (Total): " + bonusFileLookup.size());
 			logger.info("Bonus File entries (AMPs): " + bnf.getAMPS().getAMP().size());
 			logger.info("Bonus File entries (VMPs): " + bnf.getVMPS().getVMP().size());
 		}
@@ -1355,9 +1353,9 @@ public class DMDParser {
 			if(o.getClass() == AmpType.class) {		
 
 				// Determine if there is an entry in the bonus file lookup for this object
-				if(bonusFileLookup.containsKey(lookupId)) {
+				if(bonusFileLookupAMP.containsKey(lookupId)) {
 
-					BnfAmpType bnfAmp = (BnfAmpType)bonusFileLookup.get(lookupId);
+					BnfAmpType bnfAmp = (BnfAmpType)bonusFileLookupAMP.get(lookupId);
 
 					// Create BNF ConceptPropertyComponent if one exists
 					if(bnfAmp.getBNF() != null) {
@@ -1378,9 +1376,9 @@ public class DMDParser {
 			if(o.getClass() == VmpType.class) {
 
 				// Determine if there is an entry in the bonus file lookup for this object
-				if(bonusFileLookup.containsKey(lookupId)) {
+				if(bonusFileLookupVMP.containsKey(lookupId)) {
 
-					BnfVmpType bnfVmp = (BnfVmpType)bonusFileLookup.get(lookupId);
+					BnfVmpType bnfVmp = (BnfVmpType)bonusFileLookupVMP.get(lookupId);
 
 					// Create BNF ConceptPropertyComponent if one exists
 					if(bnfVmp.getBNF() != null) {
@@ -1416,7 +1414,15 @@ public class DMDParser {
 						ConceptPropertyComponent conceptPropertyComponent = new ConceptPropertyComponent();
 						conceptPropertyComponent.setCode("DDD");
 
-						conceptPropertyComponent.setValue(new DecimalType(bnfVmp.getDDD()));
+						float vf = bnfVmp.getDDD();
+						int vf_int = (int) vf;
+						double diff = vf - vf_int;
+						if (diff == 0) {
+							conceptPropertyComponent.setValue(new DecimalType(vf_int));
+						} else {
+							conceptPropertyComponent.setValue(new DecimalType(bnfVmp.getDDD().toString()));
+						}
+
 						conceptRegister.get(id).addProperty(conceptPropertyComponent);
 					}
 					
