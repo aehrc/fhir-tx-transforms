@@ -355,7 +355,7 @@ public class DMDParser {
 	}
 
 	public CodeSystem processCodeSystem(String dmdFolder, String releaseSerial, String supportFile, String version,
-			String outFolder, String dmdNote, String GTINNote, boolean processBNF, String bnfFolder, String bnfSerial) throws IOException, NoSuchMethodException, SecurityException, IllegalAccessException,
+			String outFolder, String dmdNote, String GTINNote, String bnfFilePath) throws IOException, NoSuchMethodException, SecurityException, IllegalAccessException,
 			IllegalArgumentException, InvocationTargetException, JAXBException {
 
 		logger.info("Process dm+d  " + version);
@@ -367,7 +367,6 @@ public class DMDParser {
 		File vmpFile = new File(dmdFolder, "f_vmp2_" + releaseSerial + ".xml");
 		File vmppFile = new File(dmdFolder, "f_vmpp2_" + releaseSerial + ".xml");
 		File lookupFile = new File(dmdFolder, "f_lookup2_" + releaseSerial + ".xml");
-		File bnfFile = new File(bnfFolder, "f_bnf1_" + bnfSerial + ".xml");
 
 		if (lookupTables_codeSystem.size() < 1) {
 			loadLookupTables(lookupFile);
@@ -376,6 +375,14 @@ public class DMDParser {
 		// Load extension properties
 		for (ExtensionProperty e : ExtensionProperty.values()) {
 			extensionPropertyNames.add(e.name());
+		}
+
+		File bnfFile = null;
+		boolean processBNF = false;
+		if(bnfFilePath != null && !bnfFilePath.isEmpty()) {
+
+			bnfFile = new File(bnfFilePath);
+			processBNF = true;
 		}
 
 		if (processBNF) {
@@ -699,11 +706,11 @@ public class DMDParser {
 	}
 
 	public void processCodeSystemWithUpdate(String dmdFolder, String dmdSerial, String supportFile, String outFolder,
-			String txServerUrl, FeedClient feedClient, String dmdNote, String GTINNote, boolean processBNF, String bnfReleaseFolder, String bnfReleaseSerial) throws IOException, NoSuchMethodException, SecurityException,
+			String txServerUrl, FeedClient feedClient, String dmdNote, String GTINNote, String bnfFile) throws IOException, NoSuchMethodException, SecurityException,
 			IllegalAccessException, IllegalArgumentException, InvocationTargetException, JAXBException {
 
 		String version = processVersionNumber(dmdFolder);
-		CodeSystem cs = processCodeSystem(dmdFolder, dmdSerial, supportFile, version, outFolder, dmdNote, GTINNote, processBNF, bnfReleaseFolder, bnfReleaseSerial);
+		CodeSystem cs = processCodeSystem(dmdFolder, dmdSerial, supportFile, version, outFolder, dmdNote, GTINNote, bnfFile);
 		String outFileName = "CodeSystem-dmd-" + version + ".json";
 		File outFile = new File(outFolder, outFileName);
 
@@ -1387,7 +1394,7 @@ public class DMDParser {
 						conceptPropertyComponent.setCode("BNF");
 
 						Coding coding = new Coding();
-						coding.setSystem(baseURL_CodeSystem + "/BNF");
+						coding.setSystem(baseURL_CodeSystem + "/bnf");
 						coding.setCode(bnfVmp.getBNF());
 
 						conceptPropertyComponent.setValue(coding);
@@ -1401,7 +1408,7 @@ public class DMDParser {
 						conceptPropertyComponent.setCode("ATC");
 
 						Coding coding = new Coding();
-						coding.setSystem(baseURL_CodeSystem_WHOCC + "/ATC");
+						coding.setSystem(baseURL_CodeSystem_WHOCC + "/atc");
 						coding.setCode(bnfVmp.getATC());
 
 						conceptPropertyComponent.setValue(coding);
@@ -1543,7 +1550,7 @@ public class DMDParser {
 				}
 				if (cp.getValue().getClass() == Coding.class) {
 					String lookupName = cp.getValueCoding().getSystem().replaceAll(baseURL_CodeSystem + "/", "").replace(baseURL_CodeSystem_WHOCC + "/", "");
-					if (!lookupName.equals(baseURL_CodeSystem) && LookUpTag.findByName(lookupName) == null) {
+					if (!lookupName.equals(baseURL_CodeSystem) && LookUpTag.findByName(lookupName.toUpperCase()) == null) {
 						logger.severe("Validate Error CodeSystem Reference: " + lookupName + "\t" + c.getCode());
 					}
 				}

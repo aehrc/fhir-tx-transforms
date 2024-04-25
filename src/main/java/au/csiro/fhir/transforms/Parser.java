@@ -176,13 +176,11 @@ public class Parser {
 		String GTINNote = props.getProperty("dmd.gtinReleaseNote");
 		String supportFile =  "dm+d Content For Terminology Server.xlsx";
 		String gtinFile =  props.getProperty("dmd.gtinFile");
-		boolean processBNF = Boolean.parseBoolean(props.getProperty("dmd.processBNF"));
-		String bnfFolder= props.getProperty("dmd.releaseBNFFolder");
-		String bnfSerial= props.getProperty("dmd.releaseBNFSerial");
+		String bnfFile= props.getProperty("dmd.bnfFile");
 
 		DMDParser parser = new DMDParser();
 		parser.processSupportCodeSystemWithUpdate(dmdFolder, dmdSerial, outFolder, txServer, feedClient);
-		parser.processCodeSystemWithUpdate( dmdFolder,dmdSerial ,supportFile,outFolder, txServer, feedClient, dmdNote, GTINNote, processBNF, bnfFolder, bnfSerial);
+		parser.processCodeSystemWithUpdate( dmdFolder,dmdSerial ,supportFile,outFolder, txServer, feedClient, dmdNote, GTINNote, bnfFile);
 		parser.processGtinMappingmWithUpdate(dmdFolder,gtinFile,outFolder, txServer, feedClient);
 	}
 
