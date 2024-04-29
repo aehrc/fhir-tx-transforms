@@ -1855,7 +1855,7 @@ public class DMDParser {
 						conceptPropertyComponent.setCode("BNF");
 
 						Coding coding = new Coding();
-						coding.setSystem(baseURL_CodeSystem + "/BNF");
+						coding.setSystem(baseURL_CodeSystem + "/bnf");
 						coding.setCode(bnfAmp.getBNF());
 
 						conceptPropertyComponent.setValue(coding);

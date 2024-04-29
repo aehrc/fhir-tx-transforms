@@ -9,7 +9,6 @@ package au.csiro.fhir.transforms.xml.dmd.v2_3.bnf;
 
 import javax.xml.bind.annotation.XmlRegistry;
 
-import au.csiro.fhir.transforms.xml.dmd.v2_3.bnf.BNFS.VMPS;
 import au.csiro.fhir.transforms.xml.dmd.v2_3.vmp.VIRTUALMEDPRODUCTS;
 
 /**
@@ -58,5 +57,21 @@ public class BNFObjectFactory {
      */
     public BnfVmpType createBnfVmpType() {
         return new BnfVmpType();
+    }
+
+        /**
+     * Create an instance of {@link BNFS.VMPS }
+     * 
+     */
+    public BNFS.AMPS createBNFAMPS() {
+        return new BNFS.AMPS();
+    }
+
+    /**
+     * Create an instance of {@link BnfAmpType }
+     * 
+     */
+    public BnfAmpType createBnfAmpType() {
+        return new BnfAmpType();
     }
 }
