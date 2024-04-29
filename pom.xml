@@ -2,16 +2,12 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0"
 	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
-
 	<modelVersion>4.0.0</modelVersion>
-
 	<groupId>au.csiro</groupId>
 	<artifactId>fhir-tx-transforms</artifactId>
 	<version>1.0.0-SNAPSHOT</version>
 	<packaging>jar</packaging>
-
 	<name>FHIR Terminology Transforms</name>
-
 	<organization>
 		<name>Australian e-Health Research Centre, CSIRO</name>
 		<url>https://aehrc.com/</url>
@@ -28,21 +24,18 @@
 			<comments>Variation of the BSD/MIT License</comments>
 		</license>
 	</licenses>
-
 	<properties>
 		<java.version>11</java.version>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<hapi.version>4.1.0</hapi.version>
 		<jersey.version>2.25.1</jersey.version>
 	</properties>
-
 	<scm>
 		<connection>scm:git:https://github.com/aehrc/fhir-tx-transforms.git</connection>
 		<developerConnection>scm:git:https://github.com/aehrc/fhir-tx-transforms.git</developerConnection>
 		<url>https://github.com/aehrc/fhir-tx-transforms.git</url>
 		<tag>HEAD</tag>
 	</scm>
-
 	<dependencies>
 		<dependency>
 			<groupId>junit</groupId>
@@ -55,7 +48,6 @@
 			<artifactId>javatuples</artifactId>
 			<version>1.2</version>
 		</dependency>
-
 		<dependency>
 			<groupId>org.codehaus.mojo</groupId>
 			<artifactId>exec-maven-plugin</artifactId>
@@ -107,34 +99,27 @@
 			<artifactId>jaxb-impl</artifactId>
 			<version>2.3.0</version>
 		</dependency>
-
 		<dependency>
 			<groupId>com.fasterxml.jackson.core</groupId>
 			<artifactId>jackson-databind</artifactId>
 			<version>2.12.6.1</version>
 		</dependency>
-
 		<dependency>
 			<groupId>org.glassfish.jersey.core</groupId>
 			<artifactId>jersey-client</artifactId>
 			<version>${jersey.version}</version>
 		</dependency>
-
 		<dependency>
 			<groupId>org.glassfish.jersey.media</groupId>
 			<artifactId>jersey-media-multipart</artifactId>
 			<version>${jersey.version}</version>
 		</dependency>
-
 		<dependency>
 			<groupId>javax.activation</groupId>
 			<artifactId>activation</artifactId>
 			<version>1.1.1</version>
 		</dependency>
-
-
 	</dependencies>
-
 	<build>
 		<finalName>fhir-tx-transforms</finalName>
 		<plugins>
@@ -160,8 +145,7 @@
 					<executable>java</executable>
 					<arguments>
 						<argument>-classpath</argument>
-						<classpath>
-						</classpath>
+						<classpath></classpath>
 						<argument>au.csiro.fhir.transforms.Parser</argument>
 					</arguments>
 				</configuration>
@@ -190,7 +174,32 @@
 					</execution>
 				</executions>
 			</plugin>
-			
+			<!-- Plugin required to build java classes from XSD using XJC -->
+			<!--
+			<plugin>
+				<groupId>org.codehaus.mojo</groupId>
+				<artifactId>jaxb2-maven-plugin</artifactId>
+				<version>2.5.0</version>
+				<executions>
+					<execution>
+						<id>xjc</id>
+						<goals>
+							<goal>xjc</goal>
+						</goals>
+					</execution>
+				</executions>
+				<configuration>
+					<xjbSources>
+						<xjbSource>src/main/resources/global.xjb</xjbSource>
+					</xjbSources>
+					<sources>
+						<source>src/main/resources/tradeFamily_v1_0.xsd</source>
+					</sources>
+					<outputDirectory>${basedir}/src/main/java</outputDirectory>
+					<clearOutputDir>false</clearOutputDir>
+				</configuration>
+			</plugin>
+			-->
 		</plugins>
 	</build>
 </project>
