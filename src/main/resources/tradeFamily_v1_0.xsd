@@ -1,0 +1,72 @@
+<?xml version="1.0"?>
+<!-- 15/11/2022 MIJOH  Initial XSD layout defined-->
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema">
+<!-- Defining the required complex types -->    
+
+<xs:complexType name="TFType">   
+ <xs:all> 
+            <xs:element name="TFID"        type="xs:integer"    minOccurs="1" maxOccurs="1" />
+            <xs:element name="TFIDDT"      type="xs:date"       minOccurs="0" maxOccurs="1" />            
+			<xs:element name="TFIDPREV"    type="xs:integer"    minOccurs="0" maxOccurs="1" />            
+			<xs:element name="TFGID"       type="xs:integer"    minOccurs="0" maxOccurs="1" />            
+			<xs:element name="INVALID"     type="xs:integer"    minOccurs="0" maxOccurs="1" />            
+			<xs:element name="NM"          type="xs:string"     minOccurs="1" maxOccurs="1" />            
+			<xs:element name="NMDT"        type="xs:date"       minOccurs="0" maxOccurs="1" />            
+			<xs:element name="NMPREV"      type="xs:string"     minOccurs="0" maxOccurs="1" />            
+  </xs:all>
+ </xs:complexType>
+
+<xs:complexType name="TFGType">   
+ <xs:all> 
+			<xs:element name="TFGID"       type="xs:integer"    minOccurs="1" maxOccurs="1" />            
+			<xs:element name="TFGIDDT"     type="xs:date"       minOccurs="0" maxOccurs="1" />            
+			<xs:element name="TFGIDPREV"   type="xs:integer"    minOccurs="0" maxOccurs="1" />            
+			<xs:element name="INVALID"     type="xs:integer"    minOccurs="0" maxOccurs="1" />            
+			<xs:element name="NM"          type="xs:string"     minOccurs="1" maxOccurs="1" />            
+			<xs:element name="NMDT"        type="xs:date"       minOccurs="0" maxOccurs="1" />            
+			<xs:element name="NMPREV"      type="xs:string"     minOccurs="0" maxOccurs="1" />            
+  </xs:all>
+ </xs:complexType>
+
+<xs:complexType name="TFAMPType">   
+ <xs:all> 
+			<xs:element name="TFID"       type="xs:integer"     minOccurs="1" maxOccurs="1" />            
+			<xs:element name="APID"       type="xs:integer"     minOccurs="1" maxOccurs="1" />            			
+  </xs:all>
+ </xs:complexType>
+
+<!-- Defining the required main elements with subelements, using the above defined complex type-->    
+
+ <xs:element name="TRADE_FAMILY">
+  <xs:complexType>      
+     <xs:sequence>              
+	 
+     	<xs:element name="TFS">
+          <xs:complexType>
+            <xs:sequence>              
+				<xs:element name="TF" type="TFType" minOccurs="0" maxOccurs="unbounded"/>
+            </xs:sequence>
+           </xs:complexType> 
+		</xs:element>
+
+		<xs:element name="TFGS">
+          <xs:complexType>
+            <xs:sequence>              
+				<xs:element name="TFG" type="TFGType" minOccurs="0" maxOccurs="unbounded"/>
+            </xs:sequence>
+           </xs:complexType> 
+		</xs:element>
+
+		<xs:element name="TF_AMPS">
+          <xs:complexType>
+            <xs:sequence>              
+				<xs:element name="TF_AMP" type="TFAMPType" minOccurs="0" maxOccurs="unbounded"/>
+            </xs:sequence>
+           </xs:complexType> 
+		</xs:element>
+
+    </xs:sequence>              
+   </xs:complexType>
+ </xs:element>
+
+</xs:schema>

@@ -33,7 +33,7 @@ import au.csiro.fhir.transforms.parsers.OPCSParser;
 
 public class Parser {
 
-		// private final String properties_file_name = "config.properties";
+	// private final String properties_file_name = "config.properties";
 		
 	Properties props = new Properties();
 	String outFolder = null;
@@ -176,12 +176,22 @@ public class Parser {
 		String GTINNote = props.getProperty("dmd.gtinReleaseNote");
 		String supportFile =  "dm+d Content For Terminology Server.xlsx";
 		String gtinFile =  props.getProperty("dmd.gtinFile");
-		String bnfFile= props.getProperty("dmd.bnfFile");
+		String historyFile = props.getProperty("dmd.historyFile");
+		String vtmingFile = props.getProperty("dmd.vtmingFile");
+		String tradeFamilyFile = props.getProperty("dmd.tradeFamilyFile");
+		String bnfFile= props.getProperty("dmd.bnfFile");		
 
 		DMDParser parser = new DMDParser();
 		parser.processSupportCodeSystemWithUpdate(dmdFolder, dmdSerial, outFolder, txServer, feedClient);
-		parser.processCodeSystemWithUpdate( dmdFolder,dmdSerial ,supportFile,outFolder, txServer, feedClient, dmdNote, GTINNote, bnfFile);
-		parser.processGtinMappingmWithUpdate(dmdFolder,gtinFile,outFolder, txServer, feedClient);
+		parser.processCodeSystemWithUpdate( dmdFolder,dmdSerial ,supportFile,outFolder, txServer, feedClient, dmdNote, GTINNote,historyFile,vtmingFile,tradeFamilyFile,bnfFile);
+		
+		if(gtinFile!=null) {
+			parser.processGtinMappingmWithUpdate(dmdFolder,gtinFile,outFolder, txServer, feedClient);
+		}
+
+		if(historyFile !=null) {
+			parser.processHitoryMappingWithUpdate(dmdFolder,historyFile,outFolder, txServer, feedClient);
+		}
 	}
 
 	public void parseAll(String configFileName) throws IOException, ParserConfigurationException, SAXException, ParseException, JAXBException, NoSuchMethodException, SecurityException, IllegalAccessException, IllegalArgumentException, InvocationTargetException {
