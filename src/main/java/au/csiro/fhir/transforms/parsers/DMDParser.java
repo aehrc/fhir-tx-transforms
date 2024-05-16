@@ -137,7 +137,7 @@ enum ConceptType {
 	SUPPLIER("Supplier", "Supplier", "SUPPLIER"),
 	FORM("Form", "Form", "FORM"),
 	TRADEFAMILY("Trade Family", "Trade Family", "TF"),
-	TRADEFAMILYGROUP("Trade Family Grouper", "Trade Family Grouper", "TFG");
+	TRADEFAMILYGROUP("Trade Family Group", "Trade Family Group", "TFG");
 
 	private String name;
 	private String fullName;
