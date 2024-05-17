@@ -87,6 +87,9 @@ import au.csiro.fhir.transforms.xml.dmd.v2_3.ampp.PackInfoType;
 import au.csiro.fhir.transforms.xml.dmd.v2_3.ampp.PrescInfoType;
 import au.csiro.fhir.transforms.xml.dmd.v2_3.ampp.PriceInfoType;
 import au.csiro.fhir.transforms.xml.dmd.v2_3.ampp.ReimbInfoType;
+import au.csiro.fhir.transforms.xml.dmd.v2_3.bnf.BNFS;
+import au.csiro.fhir.transforms.xml.dmd.v2_3.bnf.BnfAmpType;
+import au.csiro.fhir.transforms.xml.dmd.v2_3.bnf.BnfVmpType;
 import au.csiro.fhir.transforms.xml.dmd.v2_3.ingredient.INGREDIENTSUBSTANCES;
 import au.csiro.fhir.transforms.xml.dmd.v2_3.ingredient.INGREDIENTSUBSTANCES.ING;
 import au.csiro.fhir.transforms.xml.dmd.v2_3.lookup.HistoryInfoType;
@@ -134,7 +137,7 @@ enum ConceptType {
 	SUPPLIER("Supplier", "Supplier", "SUPPLIER"),
 	FORM("Form", "Form", "FORM"),
 	TRADEFAMILY("Trade Family", "Trade Family", "TF"),
-	TRADEFAMILYGROUP("Trade Family Grouper", "Trade Family Grouper", "TFG");
+	TRADEFAMILYGROUP("Trade Family Group", "Trade Family Group", "TFG");
 
 	private String name;
 	private String fullName;
@@ -164,7 +167,7 @@ enum LookUpTag {
 	CONTROL_DRUG_CATEGORY, DF_INDICATOR, DISCONTINUED_IND, DND, DT_PAYMENT_CATEGORY, FLAVOUR, FORM, LEGAL_CATEGORY,
 	LICENSING_AUTHORITY, LICENSING_AUTHORITY_CHANGE_REASON, NAMECHANGE_REASON, ONT_FORM_ROUTE, PRICE_BASIS,
 	REIMBURSEMENT_STATUS, ROUTE, SPEC_CONT, SUPPLIER, UNIT_OF_MEASURE, VIRTUAL_PRODUCT_PRES_STATUS,
-	VIRTUAL_PRODUCT_NON_AVAIL;
+	VIRTUAL_PRODUCT_NON_AVAIL, BNF, ATC;
 
 	public static LookUpTag findByName(String n) {
 		for (LookUpTag v : values()) {
@@ -241,6 +244,8 @@ public class DMDParser {
         }
     };
 
+	final String baseURL_CodeSystem_WHOCC = "http://www.whocc.no";
+
 	// Map by concept type to concept list.
 	Map<ConceptType, List<ConceptDefinitionComponent>> allConcepts = new LinkedHashMap<ConceptType, List<ConceptDefinitionComponent>>();
 	// All concept ID Set
@@ -259,6 +264,9 @@ public class DMDParser {
 	Map<String, List<Map<String, String>>> multipleVmps = new HashMap<String, List<Map<String, String>>>();
 	// Multiple Ingredient AMPs
 	Map<String, List<Map<String, String>>> multipleAmps = new HashMap<String, List<Map<String, String>>>();
+	// Bonus File Lookups
+	Map<BigInteger, Object> bonusFileLookupAMP = new HashMap<BigInteger, Object>();
+	Map<BigInteger, Object> bonusFileLookupVMP = new HashMap<BigInteger, Object>();
 
 	public DMDParser() {
 	}
@@ -510,8 +518,8 @@ public class DMDParser {
 	}
 
 	public CodeSystem processCodeSystem(String dmdFolder, String releaseSerial, String supportFile, String version,
-			String outFolder, String dmdNote, String gtinNote, String historyFile, String vtmingFile, String tradeFamilyFile)
-			throws IOException, NoSuchMethodException, SecurityException, IllegalAccessException,
+	String outFolder, String dmdNote, String gtinNote, String historyFile, String vtmingFile, String tradeFamilyFile, String bnfFilePath) 
+	throws IOException, NoSuchMethodException, SecurityException, IllegalAccessException,
 			IllegalArgumentException, InvocationTargetException, JAXBException {
 
 		logger.info("Process dm+d  " + version);
@@ -524,8 +532,6 @@ public class DMDParser {
 		File vmppFile = new File(dmdFolder, "f_vmpp2_" + releaseSerial + ".xml");
 		File lookupFile = new File(dmdFolder, "f_lookup2_" + releaseSerial + ".xml");
 		
-
-
 		if (lookupTables_codeSystem.size() < 1) {
 			loadLookupTables(lookupFile);
 		}
@@ -533,6 +539,33 @@ public class DMDParser {
 		// Load extension properties
 		for (ExtensionProperty e : ExtensionProperty.values()) {
 			extensionPropertyNames.add(e.name());
+		}
+
+		File bnfFile = null;
+		boolean processBNF = false;
+		if(bnfFilePath != null && !bnfFilePath.isEmpty()) {
+
+			bnfFile = new File(bnfFilePath);
+			processBNF = true;
+		}
+
+		if (processBNF) {
+
+			// Open the dmd+d bonus file - unmarshall it into an object
+			JAXBContext context = JAXBContext.newInstance(au.csiro.fhir.transforms.xml.dmd.v2_3.bnf.BNFObjectFactory.class);
+			BNFS bnf = (BNFS) context.createUnmarshaller().unmarshal(new FileReader(bnfFile));
+
+			// Iterate over the BNFS object and put into a data structure that we can lookup based on the
+			for(BnfVmpType v : bnf.getVMPS().getVMP()) {
+				bonusFileLookupVMP.putIfAbsent(v.getVPID(), v);
+			}
+
+			for(BnfAmpType v : bnf.getAMPS().getAMP()) {
+				bonusFileLookupAMP.putIfAbsent(v.getAPID(), v);
+			}
+			
+			logger.info("Bonus File entries (AMPs): " + bnf.getAMPS().getAMP().size());
+			logger.info("Bonus File entries (VMPs): " + bnf.getVMPS().getVMP().size());
 		}
 
 		// Initial CodeSystem
@@ -552,6 +585,8 @@ public class DMDParser {
 		registerProperty("VTM", supportFile, propertyRigister);
 		registerProperty("INGREDIENT", supportFile, propertyRigister);
 		registerProperty("LOOKUP", supportFile, propertyRigister);
+		registerProperty("Bonus(Supplementary)", supportFile, propertyRigister);
+		
 
 		String dmdReleaseNoteName = "dmdReleaseNote";
 		PropertyComponent dmdReleaseNotePropertyComponent = new PropertyComponent();
@@ -574,9 +609,9 @@ public class DMDParser {
 		}
 
 
-		allConcepts.put(ConceptType.AMP, processAMP(propertyRigister, allConceptsIdSet, ampFile));
+		allConcepts.put(ConceptType.AMP, processAMP(propertyRigister, allConceptsIdSet, ampFile, processBNF));
 		allConcepts.put(ConceptType.AMPP, processAMPP(propertyRigister, allConceptsIdSet, amppFile));
-		allConcepts.put(ConceptType.VMP, processVMP(propertyRigister, allConceptsIdSet, vmpFile));
+		allConcepts.put(ConceptType.VMP, processVMP(propertyRigister, allConceptsIdSet, vmpFile, processBNF));
 		allConcepts.put(ConceptType.VMPP, processVMPP(propertyRigister, allConceptsIdSet, vmppFile));
 		allConcepts.put(ConceptType.VTM, processVTM(propertyRigister, allConceptsIdSet, vtmFile));
 		allConcepts.put(ConceptType.INGREDIENT, processINGREDIENT(propertyRigister, allConceptsIdSet, ingredientFile));
@@ -866,7 +901,7 @@ public class DMDParser {
 	}
 
 	public void processCodeSystemWithUpdate(String dmdFolder, String dmdSerial, String supportFile, String outFolder,
-			String txServerUrl, FeedClient feedClient, String dmdNote, String gtinNote, String historyFile, String vtmingFile,String tradeFamilyFile)
+			String txServerUrl, FeedClient feedClient, String dmdNote, String gtinNote, String historyFile, String vtmingFile, String tradeFamilyFile, String bnfFile)
 			throws IOException, NoSuchMethodException, SecurityException, IllegalAccessException,
 			IllegalArgumentException, InvocationTargetException, JAXBException {
 
@@ -883,7 +918,7 @@ public class DMDParser {
 
 		String version = processVersionNumber(dmdFolder);
 		CodeSystem cs = processCodeSystem(dmdFolder, dmdSerial, supportFile, version, outFolder, dmdNote, gtinNote,
-				historyFile,vtmingFile,tradeFamilyFile);
+				historyFile,vtmingFile,tradeFamilyFile,bnfFile);
 		String outFileName = "CodeSystem-dmd-" + version + ".json";
 		File outFile = new File(outFolder, outFileName);
 
@@ -1376,7 +1411,7 @@ public class DMDParser {
 	}
 
 	private List<ConceptDefinitionComponent> processAMP(Map<String, PropertyComponent> propertyRigister,
-			Set<String> conceptIdSet, File xmlFile) throws JAXBException, FileNotFoundException, NoSuchMethodException,
+			Set<String> conceptIdSet, File xmlFile, boolean processBNF) throws JAXBException, FileNotFoundException, NoSuchMethodException,
 			SecurityException, IllegalAccessException, IllegalArgumentException, InvocationTargetException {
 		JAXBContext context = JAXBContext.newInstance(au.csiro.fhir.transforms.xml.dmd.v2_3.amp.ObjectFactory.class);
 		ACTUALMEDICINALPRODUCTS products = (ACTUALMEDICINALPRODUCTS) context.createUnmarshaller()
@@ -1393,6 +1428,15 @@ public class DMDParser {
 		transferComplexType(conceptRegister, propertyRigister, keyID, null, null, null, null, AppProdInfoType.class,
 				products.getAPINFORMATION().getAPINFO());
 		conceptIDDuplicationCheck(conceptIdSet, conceptRegister, keyID);
+
+		if(processBNF) {
+
+			logger.info("Processing BNF data for AMP.");
+
+			transferComplexTypeForBNF(conceptRegister, propertyRigister, keyID, products.getAMPS().getAMP());
+			
+		}
+
 		return new ArrayList<ConceptDefinitionComponent>(conceptRegister.values());
 
 	}
@@ -1426,7 +1470,7 @@ public class DMDParser {
 	}
 
 	private List<ConceptDefinitionComponent> processVMP(Map<String, PropertyComponent> propertyRigister,
-			Set<String> conceptIdSet, File xmlFile) throws JAXBException, FileNotFoundException, NoSuchMethodException,
+			Set<String> conceptIdSet, File xmlFile, boolean processBNF) throws JAXBException, FileNotFoundException, NoSuchMethodException,
 			SecurityException, IllegalAccessException, IllegalArgumentException, InvocationTargetException {
 
 		Map<String, ConceptDefinitionComponent> conceptRegister = new LinkedHashMap<String, ConceptDefinitionComponent>();
@@ -1444,9 +1488,16 @@ public class DMDParser {
 				vmp.getDRUGFORM().getDFORM());
 		transferComplexType(conceptRegister, propertyRigister, keyID, null, null, null, null, DrugRouteType.class,
 				vmp.getDRUGROUTE().getDROUTE());
-		transferComplexType(conceptRegister, propertyRigister, keyID, null, null, null, null, ControlInfoType.class,
-				vmp.getCONTROLDRUGINFO().getCONTROLINFO());
+
+		if(processBNF) {
+
+			logger.info("Processing BNF data for VMP.");
+
+			transferComplexTypeForBNF(conceptRegister, propertyRigister, keyID, vmp.getVMPS().getVMP());
+		}
+
 		conceptIDDuplicationCheck(conceptIdSet, conceptRegister, keyID);
+
 		return new ArrayList<ConceptDefinitionComponent>(conceptRegister.values());
 
 	}
@@ -1778,6 +1829,112 @@ public class DMDParser {
 
 	}
 
+	private void transferComplexTypeForBNF(Map<String, ConceptDefinitionComponent> conceptRegister,
+	Map<String, PropertyComponent> propertyRigister, String idField, List<?> oList)
+	throws NoSuchMethodException, SecurityException, IllegalAccessException, IllegalArgumentException,
+	InvocationTargetException {
+
+		for(Object o : oList) {
+
+			Method m = o.getClass().getMethod("get" + idField);
+			Object v = m.invoke(o);
+			String id = v.toString();
+			BigInteger lookupId = new BigInteger(id);
+
+			if(o.getClass() == AmpType.class) {		
+
+				// Determine if there is an entry in the bonus file lookup for this object
+				if(bonusFileLookupAMP.containsKey(lookupId)) {
+
+					BnfAmpType bnfAmp = (BnfAmpType)bonusFileLookupAMP.get(lookupId);
+
+					// Create BNF ConceptPropertyComponent if one exists
+					if(bnfAmp.getBNF() != null) {
+
+						ConceptPropertyComponent conceptPropertyComponent = new ConceptPropertyComponent();
+						conceptPropertyComponent.setCode("BNF");
+
+						Coding coding = new Coding();
+						coding.setSystem(baseURL_CodeSystem + "/bnf");
+						coding.setCode(bnfAmp.getBNF());
+
+						conceptPropertyComponent.setValue(coding);
+						conceptRegister.get(id).addProperty(conceptPropertyComponent);
+					}
+				}					
+			}				
+
+			if(o.getClass() == VmpType.class) {
+
+				// Determine if there is an entry in the bonus file lookup for this object
+				if(bonusFileLookupVMP.containsKey(lookupId)) {
+
+					BnfVmpType bnfVmp = (BnfVmpType)bonusFileLookupVMP.get(lookupId);
+
+					// Create BNF ConceptPropertyComponent if one exists
+					if(bnfVmp.getBNF() != null) {
+
+						ConceptPropertyComponent conceptPropertyComponent = new ConceptPropertyComponent();
+						conceptPropertyComponent.setCode("BNF");
+
+						Coding coding = new Coding();
+						coding.setSystem(baseURL_CodeSystem + "/bnf");
+						coding.setCode(bnfVmp.getBNF());
+
+						conceptPropertyComponent.setValue(coding);
+						conceptRegister.get(id).addProperty(conceptPropertyComponent);
+					}
+
+					// Create ATC ConceptPropertyComponent if one exists
+					if(bnfVmp.getATC() != null) {
+
+						ConceptPropertyComponent conceptPropertyComponent = new ConceptPropertyComponent();
+						conceptPropertyComponent.setCode("ATC");
+
+						Coding coding = new Coding();
+						coding.setSystem(baseURL_CodeSystem_WHOCC + "/atc");
+						coding.setCode(bnfVmp.getATC());
+
+						conceptPropertyComponent.setValue(coding);
+						conceptRegister.get(id).addProperty(conceptPropertyComponent);
+					}
+					
+					// Create DDD ConceptPropertyComponent if one exists
+					if(bnfVmp.getDDD() != null) {
+
+						ConceptPropertyComponent conceptPropertyComponent = new ConceptPropertyComponent();
+						conceptPropertyComponent.setCode("DDD");
+
+						float vf = bnfVmp.getDDD();
+						int vf_int = (int) vf;
+						double diff = vf - vf_int;
+						if (diff == 0) {
+							conceptPropertyComponent.setValue(new DecimalType(vf_int));
+						} else {
+							conceptPropertyComponent.setValue(new DecimalType(bnfVmp.getDDD().toString()));
+						}
+
+						conceptRegister.get(id).addProperty(conceptPropertyComponent);
+					}
+					
+					// Create DDD_UOMCD ConceptPropertyComponent if one exists
+					if(bnfVmp.getDDD_UOMCD() != null) {
+
+						ConceptPropertyComponent conceptPropertyComponent = new ConceptPropertyComponent();
+						conceptPropertyComponent.setCode("DDD_UOMCD");
+
+						Coding coding = new Coding();
+						coding.setSystem(baseURL_CodeSystem);
+						coding.setCode(bnfVmp.getDDD_UOMCD());
+
+						conceptPropertyComponent.setValue(coding);
+						conceptRegister.get(id).addProperty(conceptPropertyComponent);
+					}
+				}
+			}			
+		}
+	}
+
 	/**
 	 * Extract from VMP xml, save multiple grouped properties in map for future use
 	 */
@@ -1901,8 +2058,8 @@ public class DMDParser {
 					logger.severe("Validate Error : " + pName + "\t" + c.getCode());
 				}
 				if (cp.getValue().getClass() == Coding.class) {
-					String lookupName = cp.getValueCoding().getSystem().replaceAll(baseURL_CodeSystem + "/", "");
-					if (!lookupName.equals(baseURL_CodeSystem) && LookUpTag.findByName(lookupName) == null) {
+					String lookupName = cp.getValueCoding().getSystem().replaceAll(baseURL_CodeSystem + "/", "").replace(baseURL_CodeSystem_WHOCC + "/", "");
+					if (!lookupName.equals(baseURL_CodeSystem) && LookUpTag.findByName(lookupName.toUpperCase()) == null) {
 						logger.severe("Validate Error CodeSystem Reference: " + lookupName + "\t" + c.getCode());
 					}
 				}
