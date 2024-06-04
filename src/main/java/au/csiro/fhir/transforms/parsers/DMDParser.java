@@ -1488,6 +1488,8 @@ public class DMDParser {
 				vmp.getDRUGFORM().getDFORM());
 		transferComplexType(conceptRegister, propertyRigister, keyID, null, null, null, null, DrugRouteType.class,
 				vmp.getDRUGROUTE().getDROUTE());
+		transferComplexType(conceptRegister, propertyRigister, keyID, null, null, null, null, ControlInfoType.class,
+				vmp.getCONTROLDRUGINFO().getCONTROLINFO());				
 
 		if(processBNF) {
 
