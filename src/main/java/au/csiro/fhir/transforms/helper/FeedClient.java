@@ -117,7 +117,7 @@ public class FeedClient {
 
 		WebTarget webTarget = client.target(feed);
 
-		WebTarget createEntryTarget = webTarget.path("entry/");
+		WebTarget createEntryTarget = webTarget.path("entry");
 
 		createEntryTarget.register(MultiPartFeature.class);
 
