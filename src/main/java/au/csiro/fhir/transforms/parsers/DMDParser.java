@@ -401,7 +401,7 @@ public class DMDParser {
 		conceptMap.setId(historyMapID + "-" + version.replaceAll("\\.", ""));
 		conceptMap.setUrl(baseURL_ConceptMap_History)
 				.setDescription(
-						"A FHIR ConceptMap represent the hisotry of  Dictionary of medicines and devices (dm+d)")
+						"A FHIR ConceptMap representing the history of the Dictionary of medicines and devices (dm+d)")
 				.setVersion(version).setTitle(historyMapTitle).setName(historyMapTitle)
 				.setStatus(PublicationStatus.ACTIVE).setExperimental(false).setPublisher("NHS UK");
 
@@ -1233,7 +1233,7 @@ public class DMDParser {
 			codeSystem.setId(csID + "-" + tag.replaceAll("_", "-") + "-" + version);
 			String url = baseURL_CodeSystem_Lookup + "/" + tag;
 			codeSystem.setUrl(url).setValueSet(url + "/vs").setDescription(
-					"A FHIR CodeSystem rendering of the lookup table in Dictionary of medicines and devices (dm+d)")
+					"A FHIR CodeSystem rendering of the lookup table in the Dictionary of medicines and devices (dm+d)")
 					.setVersion(version).setTitle(title).setName(title).setStatus(PublicationStatus.ACTIVE)
 					.setExperimental(false).setContent(CodeSystemContentMode.COMPLETE).setPublisher("NHS UK")
 					.setContent(CodeSystemContentMode.COMPLETE);
